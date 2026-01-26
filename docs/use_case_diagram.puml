@@ -1,0 +1,73 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Candidat" as c
+actor "Coordinateur" as coord
+actor "Admin Établissement" as admin_etab
+actor "Super Admin" as admin_super
+
+package "Système CFC (Centre de Formation Continue)" {
+
+    package "Espace Public" {
+        usecase "Consulter le catalogue des formations" as UC_Consulter
+        usecase "Se préinscrire (Créer compte)" as UC_Preinscrire
+        usecase "S'authentifier" as UC_Login
+    }
+
+    package "Espace Candidat" {
+        usecase "Déposer un dossier" as UC_Deposer
+        usecase "Suivre l'état de son dossier" as UC_Suivre
+    }
+
+    package "Gestion Formation (Pédagogique)" {
+        usecase "Gérer les dates d'inscription\n(Ouvrir/Fermer)" as UC_Dates
+        note right of UC_Dates
+            Règle: Uniquement pour ses formations
+            et définit date début/fin
+        end note
+    }
+
+    package "Gestion Établissement" {
+        usecase "CRUD Formations\n(Brouillon -> Publiée)" as UC_CRUD_Form
+        usecase "Valider/Rejeter Inscriptions" as UC_Valider
+    }
+
+    package "Administration Globale" {
+        usecase "Gérer les Établissements" as UC_Manage_Etab
+        usecase "Gérer les Admins d'Établissement" as UC_Manage_Users
+        usecase "Configuration Globale\n(Année Univ)" as UC_Config
+        usecase "Voir Reporting Global" as UC_Report
+    }
+}
+
+' Relations Candidat
+c -- UC_Consulter
+c -- UC_Preinscrire
+c -- UC_Login
+UC_Preinscrire ..> UC_Login : <<include>>
+c -- UC_Deposer
+c -- UC_Suivre
+
+' Relations Coordinateur
+coord -- UC_Login
+coord -- UC_Dates
+
+' Relations Admin Etablissement
+admin_etab -- UC_Login
+admin_etab -- UC_CRUD_Form
+admin_etab -- UC_Valider
+admin_etab -- UC_Report : (Vue Établissement)
+
+' Relations Super Admin
+admin_super -- UC_Login
+admin_super -- UC_Manage_Etab
+admin_super -- UC_Manage_Users
+admin_super -- UC_Config
+admin_super -- UC_Report : (Vue Globale)
+
+' Héritage des droits (Optionnel mais logique)
+' Un Admin Etablissement pourrait avoir les droits Coordinateur s'il est aussi prof,
+' mais gardons les rôles distincts selon le cahier des charges.
+
+@enduml
