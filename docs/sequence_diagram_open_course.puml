@@ -1,0 +1,30 @@
+@startuml
+autonumber
+actor "Coordinateur" as Coord
+participant "Frontend" as Front
+participant "API" as Back
+database "PostgreSQL" as DB
+
+title Scénario A : Ouverture des inscriptions (Gestionnaire)
+
+== Initialisation ==
+Coord -> Front: Accède à sa formation "Master Big Data"
+Front -> Back: GET /api/courses/my-courses/
+Back -> DB: SELECT * FROM Course WHERE coordinator_id=...
+DB --> Back: Liste des formations
+Back --> Front: Affiche les détails
+
+== Modification des dates ==
+Coord -> Front: Définit Date Début & Fin + Clic "Ouvrir"
+Front -> Back: PATCH /api/courses/{id}/
+note right: Payload: { open_date: "2026-03-01", status: "PUBLISHED" }
+
+activate Back
+Back -> Back: Vérifie les droits (IsCoordinator)
+Back -> DB: UPDATE Course SET ...
+DB --> Back: OK
+Back --> Front: 200 OK
+deactivate Back
+
+Front -> Coord: Notification "Inscriptions ouvertes"
+@enduml
