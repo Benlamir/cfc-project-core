@@ -20,6 +20,7 @@ Modèles clés :
 ### Diagrammes
 
 *   [Diagramme de Cas d'Utilisation](docs/use_case_diagram.puml)
+*   [Diagramme de Classes](docs/class_diagram.puml)
 
 ## Structure du Projet
 
