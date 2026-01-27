@@ -1,35 +1,35 @@
-# Continuing Education Center (CFC)
+# Centre de Formation Continue (CFC)
 
-A comprehensive university web application for managing continuing education programs. This project serves as a final year project capable of demonstrating modern web development practices, containerization, and modular architecture.
+Une application web universitaire complète pour la gestion des programmes de formation continue. Ce projet faire office de projet de fin d'études capable de démontrer des pratiques modernes de développement web, la conteneurisation et une architecture modulaire.
 
-## Tech Stack
+## Stack Technique
 
 *   **Backend**: Python 3.11+ (Django 5.x + Django REST Framework)
 *   **Frontend**: TypeScript (React + Vite)
-*   **Database**: PostgreSQL
+*   **Base de données**: PostgreSQL
 *   **Infrastructure**: Docker, Docker Compose, GitHub Actions
-*   **Modeling**: PlantUML
+*   **Modélisation**: PlantUML
 
 ## Architecture
 
-We follow a modular, containerized architecture.
-Key patterns:
-*   **Fat Models, Thin Views** / Service Layer where appropriate.
-*   **Role Based Access Control (RBAC)** across the system.
+Nous suivons une architecture modulaire et conteneurisée.
+Modèles clés :
+*   **Fat Models, Thin Views** / Couche Service si nécessaire.
+*   **Contrôle d'accès basé sur les rôles (RBAC)** à travers le système.
 
-### Diagrams
+### Diagrammes
 
-*   [Use Case Diagram](docs/use_case_diagram.puml)
+*   [Diagramme de Cas d'Utilisation](docs/use_case_diagram.puml)
 
-## Project Structure
+## Structure du Projet
 
-A high-level overview of the repository structure:
+Un aperçu de haut niveau de la structure du dépôt :
 
-*   `backend/` - Django project source code and API definitions.
-*   `frontend/` - React/Vite application source code.
-*   `infra/` - DevOps configuration (Docker, Nginx, CI/CD scripts).
-*   `docs/` - Project documentation and UML diagrams.
+*   `backend/` - Code source du projet Django et définitions de l'API.
+*   `frontend/` - Code source de l'application React/Vite.
+*   `infra/` - Configuration DevOps (Docker, Nginx, scripts CI/CD).
+*   `docs/` - Documentation du projet et diagrammes UML.
 
-## Getting Started
+## Pour Commencer
 
-*(Instructions for running the project will be added as the infrastructure is set up)*
+*(Les instructions pour lancer le projet seront ajoutées une fois l'infrastructure mise en place)*
