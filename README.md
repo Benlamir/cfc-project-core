@@ -21,6 +21,10 @@ Modèles clés :
 
 *   [Diagramme de Cas d'Utilisation](docs/use_case_diagram.puml)
 *   [Diagramme de Classes](docs/class_diagram.puml)
+*   [Diagramme de Séquence (Inscription)](docs/sequence_diagram.puml)
+*   [Diagramme de Séquence (Ouverture Formation)](docs/sequence_diagram_open_course.puml)
+*   [Diagramme de Séquence (Validation Dossier)](docs/sequence_diagram_validation.puml)
+*   [Diagramme de Séquence (Fermeture Auto)](docs/sequence_diagram_auto_close.puml)
 
 ## Structure du Projet
 

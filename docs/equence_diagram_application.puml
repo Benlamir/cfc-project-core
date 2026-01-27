@@ -1,0 +1,51 @@
+@startuml
+autonumber
+skinparam responseMessageBelowArrow true
+
+actor "Candidat" as User
+participant "Frontend (React)" as Front
+participant "API (Django)" as Back
+database "PostgreSQL" as DB
+
+title Scénario B : Préinscription et Dépôt de Dossier
+
+== 1. Authentification & Choix ==
+User -> Front: Sélectionne une Formation
+Front -> Back: GET /api/courses/{id}/check-eligibility/
+activate Back
+Back -> DB: Vérifie status=PUBLISHED \net date_actuelle entre open/close
+DB --> Back: OK
+Back --> Front: { eligibilite: true }
+deactivate Back
+
+== 2. Création de la candidature (Brouillon) ==
+User -> Front: Clique "Postuler"
+Front -> Back: POST /api/enrollments/ (course_id)
+activate Back
+Back -> DB: INSERT Enrollment (status=PRE_ENROLLED)
+DB --> Back: ID: 123
+Back --> Front: HTTP 201 Created
+deactivate Back
+
+== 3. Dépôt des pièces ==
+User -> Front: Upload CV et Lettre (PDF)
+Front -> Back: PUT /api/enrollments/123/upload/
+activate Back
+Back -> Back: Vérifie format/taille
+Back -> DB: UPDATE Enrollment (documents=json)
+Back --> Front: HTTP 200 OK
+deactivate Back
+
+== 4. Soumission Finale ==
+User -> Front: Clique "Soumettre le dossier"
+Front -> Back: POST /api/enrollments/123/submit/
+activate Back
+Back -> DB: SELECT * FROM Enrollment WHERE id=123
+Back -> Back: Vérifie présence documents obligatoires
+Back -> DB: UPDATE status = SUBMITTED
+Back --> Front: HTTP 200 OK
+deactivate Back
+
+Front -> User: Affiche "Dossier envoyé avec succès"
+
+@enduml

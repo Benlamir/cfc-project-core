@@ -1,0 +1,28 @@
+@startuml
+autonumber
+actor "Planificateur (Cron/Celery)" as Cron
+participant "Backend (Task)" as Back
+database "PostgreSQL" as DB
+
+title Scénario D : Fermeture automatique des inscriptions (Job Planifié)
+
+== Déclenchement (ex: Chaque nuit à 00h00) ==
+Cron -> Back: Exécute task `close_expired_courses`
+activate Back
+
+== Recherche des formations expirées ==
+Back -> DB: SELECT * FROM Course \nWHERE status='PUBLISHED' \nAND registration_close_date < NOW()
+DB --> Back: Liste [Course A, Course B...]
+
+== Traitement par lot (Batch) ==
+loop Pour chaque formation expirée
+    Back -> Back: Log "Fermeture formation ID: X"
+    Back -> DB: UPDATE Course SET status='CLOSED' WHERE id=X
+    note right: On change le statut pour bloquer les nouvelles demandes
+end
+
+== Finalisation ==
+Back --> Cron: Job terminé (Succès)
+deactivate Back
+
+@enduml
