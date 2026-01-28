@@ -26,6 +26,7 @@ Modèles clés :
 *   [Diagramme de Séquence (Validation Dossier)](docs/sequence_diagram_validation.puml)
 *   [Diagramme de Séquence (Fermeture Auto)](docs/sequence_diagram_auto_close.puml)
 *   [Diagramme d'États (Cycles de Vie)](docs/state_diagrams.puml)
+*   [Diagramme d'Activités (Parcours Candidat)](docs/activity_diagram_candidate.puml)
 
 ## Structure du Projet
 
