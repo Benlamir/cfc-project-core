@@ -1,0 +1,45 @@
+@startuml
+title Diagramme d'Activités : Parcours de Candidature
+
+' Définition des couloirs (Acteurs vs Système)
+|Candidat|
+start
+:Accéder à la plateforme CFC;
+:Consulter le Catalogue des Formations;
+:Sélectionner une Formation;
+
+|Système|
+' Règle métier stricte : Formation publiée ET Période ouverte
+if (Formation Ouverte & Publiée ?) then (Non)
+    :Afficher "Inscriptions Fermées";
+    stop
+else (Oui)
+    :Afficher bouton "Postuler";
+endif
+
+|Candidat|
+if (Possède un compte ?) then (Oui)
+    :S'authentifier;
+else (Non)
+    :Remplir formulaire d'inscription;
+    :Créer compte (Pré-inscription);
+endif
+
+' Boucle de validation du dossier
+repeat
+    :Remplir les informations pédagogiques;
+    :Téléverser les pièces (CV, Diplômes);
+    :Soumettre le dossier;
+    
+    |Système|
+    :Vérifier complétude et format fichiers;
+repeat while (Dossier Valide ?) is (Non)
+-> Oui;
+
+:Enregistrer dossier (Statut: SOUMIS);
+:Envoyer Email de confirmation;
+
+|Candidat|
+:Recevoir notification de succès;
+stop
+@enduml
