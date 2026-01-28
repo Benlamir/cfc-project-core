@@ -19,14 +19,14 @@ Modèles clés :
 
 ### Diagrammes
 
-*   [Diagramme de Cas d'Utilisation](docs/use_case_diagram.puml)
-*   [Diagramme de Classes](docs/class_diagram.puml)
-*   [Diagramme de Séquence (Inscription)](docs/sequence_diagram.puml)
-*   [Diagramme de Séquence (Ouverture Formation)](docs/sequence_diagram_open_course.puml)
-*   [Diagramme de Séquence (Validation Dossier)](docs/sequence_diagram_validation.puml)
-*   [Diagramme de Séquence (Fermeture Auto)](docs/sequence_diagram_auto_close.puml)
-*   [Diagramme d'États (Cycles de Vie)](docs/state_diagrams.puml)
-*   [Diagramme d'Activités (Parcours Candidat)](docs/activity_diagram_candidate.puml)
+*   [Diagramme de Cas d'Utilisation](docs/uml/use_case_diagram.puml)
+*   [Diagramme de Classes](docs/uml/class_diagram.puml)
+*   [Diagramme de Séquence (Inscription)](docs/uml/sequence_diagram.puml)
+*   [Diagramme de Séquence (Ouverture Formation)](docs/uml/sequence_diagram_open_course.puml)
+*   [Diagramme de Séquence (Validation Dossier)](docs/uml/sequence_diagram_validation.puml)
+*   [Diagramme de Séquence (Fermeture Auto)](docs/uml/sequence_diagram_auto_close.puml)
+*   [Diagramme d'États (Cycles de Vie)](docs/uml/state_diagrams.puml)
+*   [Diagramme d'Activités (Parcours Candidat)](docs/uml/activity_diagram_candidate.puml)
 
 ## Structure du Projet
 
