@@ -218,5 +218,3 @@ Thumbs.db
 .env
 .venv/
 
-# Agent Rules
-.agent/rules/cfc-project-rules.md
