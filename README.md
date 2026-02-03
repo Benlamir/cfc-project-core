@@ -33,10 +33,34 @@ Modèles clés :
 Un aperçu de haut niveau de la structure du dépôt :
 
 *   `backend/` - Code source du projet Django et définitions de l'API.
+    *   `cfc_core/` - Configuration principale (settings, urls).
+    *   `courses/` - Gestion des établissements et des formations.
 *   `frontend/` - Code source de l'application React/Vite.
 *   `infra/` - Configuration DevOps (Docker, Nginx, scripts CI/CD).
 *   `docs/` - Documentation du projet et diagrammes UML.
 
 ## Pour Commencer
 
-*(Les instructions pour lancer le projet seront ajoutées une fois l'infrastructure mise en place)*
+### Prérequis
+*   Docker & Docker Compose
+
+### Lancement Rapide
+1.  **Démarrer le projet** :
+    ```bash
+    docker compose up --build -d
+    ```
+
+2.  **Accéder aux services** :
+    *   Frontend : [http://localhost:5173](http://localhost:5173)
+    *   Backend API : [http://localhost:8000/api](http://localhost:8000/api)
+    *   Django Admin : [http://localhost:8000/admin](http://localhost:8000/admin)
+
+3.  **Commandes Utiles** :
+    *   Créer un super-utilisateur :
+        ```bash
+        docker compose run --rm backend python manage.py createsuperuser
+        ```
+    *   Lancer les tests :
+        ```bash
+        docker compose run --rm backend python manage.py test
+        ```
