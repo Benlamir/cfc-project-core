@@ -1,8 +1,23 @@
-from rest_framework import viewsets
-from .models import Course
-from .serializers import CourseSerializer
+from rest_framework import viewsets, permissions
+from .models import Course, Establishment
+from .serializers import CourseSerializer, EstablishmentSerializer
+
+class EstablishmentViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing establishments.
+    """
+    queryset = Establishment.objects.all().order_by('name')
+    serializer_class = EstablishmentSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class CourseViewSet(viewsets.ModelViewSet):
-    queryset = Course.objects.all()
+    """
+    API endpoint for managing courses.
+    """
+    queryset = Course.objects.all().order_by('-created_at')
     serializer_class = CourseSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    def perform_create(self, serializer):
+        # Assign current user as coordinator automatically on creation
+        serializer.save(coordinator=self.request.user)
