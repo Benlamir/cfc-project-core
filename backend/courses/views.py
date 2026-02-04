@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions
 from .models import Course, Establishment
 from .serializers import CourseSerializer, EstablishmentSerializer
+from .permissions import IsCoordinatorOrReadOnly
 
 class EstablishmentViewSet(viewsets.ModelViewSet):
     """
@@ -16,7 +17,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     """
     queryset = Course.objects.all().order_by('-created_at')
     serializer_class = CourseSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsCoordinatorOrReadOnly]
 
     def perform_create(self, serializer):
         # Assign current user as coordinator automatically on creation
