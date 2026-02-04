@@ -1,0 +1,31 @@
+@startuml
+autonumber
+actor "Admin Etablissement" as Admin
+participant "Frontend" as Front
+participant "API" as Back
+database "PostgreSQL" as DB
+
+title Scénario C : Validation d'un dossier (Admin)
+
+== Réception ==
+Admin -> Front: Consulte la liste des candidats "Soumis"
+Front -> Back: GET /api/enrollments/?status=SUBMITTED
+Back --> Front: Liste des dossiers
+
+== Analyse ==
+Admin -> Front: Ouvre le dossier de "Oussama"
+Front -> Back: GET /api/enrollments/{id}/
+Back --> Front: Détails + Liens vers PDF (CV, Lettre)
+Admin -> Admin: Vérifie les pièces jointes
+
+== Décision ==
+Admin -> Front: Clique sur "Accepter"
+Front -> Back: POST /api/enrollments/{id}/approve/
+activate Back
+Back -> DB: UPDATE Enrollment SET status='ACCEPTED'
+Back -> Back: Trigger Email Notification (Accepté)
+Back --> Front: 200 OK
+deactivate Back
+
+Front -> Admin: Confirmation visuelle
+@enduml

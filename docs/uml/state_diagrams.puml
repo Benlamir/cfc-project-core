@@ -1,0 +1,67 @@
+@startuml
+scale 800 width
+hide empty description
+
+' Configuration des couleurs
+skinparam state {
+  BackgroundColor<<End>> #Gainsboro
+  BackgroundColor<<Valid>> #Honeydew
+  BackgroundColor<<Reject>> #MistyRose
+  BorderColor Black
+  ArrowColor Black
+}
+
+title Diagramme d'États : Cycles de Vie (Formation & Inscription)
+
+' Machine à états 1 : Formation
+state "1. Cycle de Vie Formation" as CycleFormation {
+    state "BROUILLON" as Draft
+    state "PUBLIÉE" as Published
+    state "ARCHIVÉE" as Archived <<End>>
+
+    [*] --> Draft : Création
+    Draft --> Published : Publier
+    
+    state Published {
+        state "Période Fermée" as Closed
+        state "Période Ouverte" as Open <<Valid>>
+        
+        [*] --> Closed : Init
+        Closed --> Open : Date >= Début
+        Open --> Closed : Date > Fin
+    }
+
+    Published --> Archived : Clôture Année
+    Archived --> [*]
+}
+
+' Séparation visuelle
+CycleFormation -[hidden]-> CycleInscription
+
+' Machine à états 2 : Inscription
+state "2. Cycle de Vie Inscription" as CycleInscription {
+    state "PRÉ-INSCRIT" as Pre
+    state "SOUMIS" as Sub
+    state "EN REVUE" as Review
+    state "ACCEPTÉ" as Acc <<Valid>>
+    state "REFUSÉ" as Rej <<Reject>>
+    state "INSCRIT" as Final <<End>>
+
+    [*] --> Pre : Création compte
+    Pre --> Sub : Dépôt dossier
+    
+    Sub --> Review : Prise en charge Admin
+    
+    state Decision <<choice>>
+    Review --> Decision : Analyse
+    
+    Decision --> Acc : Dossier Valide
+    Decision --> Rej : Dossier Invalide
+    
+    Acc --> Final : Paiement/Admin
+    
+    Final --> [*]
+    Rej --> [*]
+}
+
+@enduml

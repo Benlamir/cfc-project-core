@@ -1,0 +1,102 @@
+@startuml
+' Settings
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "User Management (RBAC)" {
+    class User {
+        +id : UUID
+        +email : String
+        +password : String
+        +first_name : String
+        +last_name : String
+        +is_active : Boolean
+        +role : UserRole
+    }
+
+    enum UserRole {
+        SUPER_ADMIN
+        ETABLISSEMENT_ADMIN
+        COORDINATOR
+        CANDIDATE
+    }
+
+    class UserProfile {
+        +phone : String
+        +address : String
+        +cin : String
+        +birth_date : Date
+    }
+
+    User *-- "1" UserProfile : has >
+}
+
+package "Academic Structure" {
+    class Establishment {
+        +id : UUID
+        +name : String
+        +code : String
+        +logo_url : String
+        +description : Text
+    }
+
+    class Course {
+        +id : UUID
+        +title : String
+        +description : Text
+        +status : CourseStatus
+        +start_date : Date
+        +end_date : Date
+        +registration_open_date : Date
+        +registration_close_date : Date
+        +capacity : Integer
+        --
+        +is_open_for_registration() : Boolean
+    }
+
+    enum CourseStatus {
+        DRAFT
+        PUBLISHED
+        ARCHIVED
+    }
+
+    note right of Course::is_open_for_registration
+        [Règle Métier]
+        Retourne VRAI si :
+        status == PUBLISHED
+        ET date du jour entre open_date et close_date
+    end note
+}
+
+package "Enrollment Process" {
+    class Enrollment {
+        +id : UUID
+        +application_date : DateTime
+        +status : EnrollmentStatus
+        +rejection_reason : Text
+        +documents : JSON
+    }
+
+    enum EnrollmentStatus {
+        PRE_ENROLLED
+        SUBMITTED
+        UNDER_REVIEW
+        ACCEPTED
+        REJECTED
+        FINALIZED
+    }
+
+    note right of EnrollmentStatus
+       Cycle de vie de l'inscription
+       (Préinscription -> Inscrit)
+    end note
+}
+
+' Relations
+Establishment "1" -- "1" User : managed by (AdminEtab) >
+Establishment "1" *-- "0..*" Course : offers >
+Course "0..*" -- "1" User : coordinated by (Coordinator) >
+User "1" -- "0..*" Enrollment : applies (Candidate) >
+Course "1" -- "0..*" Enrollment : receives >
+
+@enduml
