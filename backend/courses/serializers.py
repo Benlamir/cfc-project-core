@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, Establishment
+from .models import Course, Establishment, Enrollment
 
 class EstablishmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,3 +34,13 @@ class CourseSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+class EnrollmentSerializer(serializers.ModelSerializer):
+    course_details = CourseSerializer(source='course', read_only=True)
+
+    class Meta:
+        model = Enrollment
+        fields = ['id', 'course', 'course_details', 'candidate', 'status', 'application_date', 'rejection_reason', 'documents']
+        read_only_fields = ['id', 'candidate', 'status', 'application_date', 'rejection_reason']
+        # 'candidate' est read-only car il sera rempli automatiquement avec l'user connecté
+        # 'status' est read-only pour la création (commence toujours à PRE_ENROLLED)

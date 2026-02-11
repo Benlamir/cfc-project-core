@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+import uuid
 
 class Establishment(models.Model):
     name = models.CharField(max_length=150)
@@ -85,3 +86,45 @@ class Course(models.Model):
 
     def __str__(self):
         return self.title
+
+class Enrollment(models.Model):
+    class Status(models.TextChoices):
+        PRE_ENROLLED = 'PRE_ENROLLED', _('Pré-inscrit')
+        SUBMITTED = 'SUBMITTED', _('Soumis')
+        UNDER_REVIEW = 'UNDER_REVIEW', _('En cours de revue')
+        ACCEPTED = 'ACCEPTED', _('Accepté')
+        REJECTED = 'REJECTED', _('Rejeté')
+        FINALIZED = 'FINALIZED', _('Finalisé')
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='enrollments'
+    )
+    candidate = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='enrollments'
+    )
+    
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PRE_ENROLLED
+    )
+    
+    application_date = models.DateTimeField(auto_now_add=True)
+    rejection_reason = models.TextField(blank=True, null=True)
+    
+    # Pour stocker des JSON (documents, réponses formulaire...)
+    # Nécessite PostgreSQL idéalement, mais OK pour dev
+    documents = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        # Un candidat ne peut s'inscrire qu'une seule fois par cours
+        unique_together = ('course', 'candidate')
+        ordering = ['-application_date']
+
+    def __str__(self):
+        return f"{self.candidate} -> {self.course} ({self.status})"
