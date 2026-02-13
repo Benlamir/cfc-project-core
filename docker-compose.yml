@@ -1,0 +1,46 @@
+services:
+  # Service 1 : La Base de Données
+  db:
+    image: postgres:15-alpine
+    container_name: projet_db
+    environment:
+      - POSTGRES_DB=app_db
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password123 # À mettre dans un .env plus tard
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persistance des données
+    ports:
+      - "5432:5432"
+
+  # Service 2 : Ton Backend (Django)
+  backend:
+    build: ./backend # Suppose que tu as un dossier 'backend' avec un Dockerfile
+    container_name: projet_backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend:/app # Hot-Reload : Si tu modifies le code, ça se met à jour direct
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db # Attend que la DB démarre
+    environment:
+      - DB_HOST=db # Le nom du service ci-dessus
+      - DB_NAME=app_db
+      - DB_USER=admin
+      - DB_PASS=password123
+
+  # Service 3 : Son Frontend (React)
+  frontend:
+    image: node:18-alpine # Image temporaire pour l'exemple
+    container_name: projet_frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: npm start # Commande standard React
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
