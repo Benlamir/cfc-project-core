@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Service 1 : La Base de Données
   db:
@@ -16,7 +14,7 @@ services:
 
   # Service 2 : Ton Backend (Django)
   backend:
-    build: ./backend  # Suppose que tu as un dossier 'backend' avec un Dockerfile
+    build: ./backend # Suppose que tu as un dossier 'backend' avec un Dockerfile
     container_name: projet_backend
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
