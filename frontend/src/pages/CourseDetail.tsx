@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
+import Header from '../components/Header';
 
 // Types (à factoriser)
 interface Establishment {
@@ -55,18 +56,7 @@ const CourseDetail: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
             {/* 1. Header (Reused) */}
-            <header className="bg-white shadow-sm sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                    <div className="flex items-center">
-                        <Link to="/" className="text-2xl font-bold text-blue-900 tracking-tight">CFC</Link>
-                    </div>
-                    <nav className="flex space-x-8">
-                        <Link to="/" className="text-blue-900 font-medium hover:text-blue-700">Formations</Link>
-                        <a href="#" className="text-gray-600 hover:text-blue-900 transition">À propos</a>
-                        <Link to="/login" className="text-gray-600 hover:text-blue-900 transition">Connexion</Link>
-                    </nav>
-                </div>
-            </header>
+            <Header />
 
             {/* 2. Hero Section */}
             <div className="bg-blue-900 text-white py-16">
