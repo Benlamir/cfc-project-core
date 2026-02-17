@@ -47,12 +47,12 @@ const Home: React.FC = () => {
 
     // Filtrage simple côté client pour l'instant
     const filteredCourses = courses.filter(course => {
-        const matchEstablishment = filterEstablishment ? course.establishment_details.name.includes(filterEstablishment) : true;
+        const matchEstablishment = filterEstablishment ? course.establishment_details?.name?.includes(filterEstablishment) : true;
         const matchStatus = filterStatus ? course.status === filterStatus : true;
         return matchEstablishment && matchStatus;
     });
 
-    const uniqueEstablishments = Array.from(new Set(courses.map(c => c.establishment_details.name)));
+    const uniqueEstablishments = Array.from(new Set(courses.map(c => c.establishment_details?.name).filter(Boolean)));
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
@@ -116,8 +116,8 @@ const Home: React.FC = () => {
                             <div key={course.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-300 overflow-hidden border border-gray-100 flex flex-col h-full group">
                                 <div className="h-48 bg-gray-200 relative overflow-hidden">
                                     {/* Placeholder Image - could be replaced by real image if available */}
-                                    {course.establishment_details.logo ? (
-                                        <img src={course.establishment_details.logo} alt={course.establishment_details.name} className="w-full h-full object-cover transition transform group-hover:scale-105 duration-500" />
+                                    {course.establishment_details?.logo ? (
+                                        <img src={course.establishment_details.logo} alt={course.establishment_details?.name ?? 'Établissement'} className="w-full h-full object-cover transition transform group-hover:scale-105 duration-500" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-200">
                                             <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" /></svg>
@@ -132,7 +132,7 @@ const Home: React.FC = () => {
                                 <div className="p-6 flex-1 flex flex-col">
                                     <div className="flex items-center mb-3">
                                         <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                            {course.establishment_details.name}
+                                            {course.establishment_details?.name ?? 'Non défini'}
                                         </span>
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition">
