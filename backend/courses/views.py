@@ -49,6 +49,7 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         ).distinct()
 
     def perform_create(self, serializer):
+        from rest_framework import serializers # ensure it's available locally if not at top
         # Vérifier si le candidat a déjà une inscription pour ce cours
         course = serializer.validated_data['course']
         if Enrollment.objects.filter(course=course, candidate=self.request.user).exists():
@@ -56,3 +57,16 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
             
         # Assigner automatiquement le candidat connecté
         serializer.save(candidate=self.request.user)
+        
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        user = self.request.user
+        instance = self.get_object()
+        
+        # Check if 'status' is being updated
+        if 'status' in serializer.validated_data:
+            # Only superusers or the course coordinator can change the status
+            if not (user.is_superuser or instance.course.coordinator == user):
+                raise PermissionDenied("Vous n'êtes pas autorisé à modifier le statut de cette candidature.")
+                
+        serializer.save()

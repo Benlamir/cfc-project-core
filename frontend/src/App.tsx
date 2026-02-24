@@ -3,7 +3,10 @@ import { MainLayout } from './components/layout/MainLayout';
 import { Home } from './pages/Home';
 import { Authentication } from './pages/Authentication';
 import { FormationDetail } from './pages/FormationDetail';
+import { MyApplications } from './pages/MyApplications';
 import { AuthProvider } from './contexts/AuthContext';
+
+import { Candidates } from './pages/Candidates';
 
 function App() {
   return (
@@ -16,7 +19,8 @@ function App() {
             <Route index element={<Home />} />
             <Route path="formations/:id" element={<FormationDetail />} />
             <Route path="formations" element={<div className="p-4">Pages des Formations (En construction)</div>} />
-            <Route path="candidats" element={<div className="p-4">Pages des Candidats (En construction)</div>} />
+            <Route path="mes-candidatures" element={<MyApplications />} />
+            <Route path="candidats" element={<Candidates />} />
             <Route path="etablissements" element={<div className="p-4">Pages des Établissements (En construction)</div>} />
             <Route path="parametres" element={<div className="p-4">Paramètres (En construction)</div>} />
           </Route>

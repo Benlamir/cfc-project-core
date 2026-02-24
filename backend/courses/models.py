@@ -111,7 +111,14 @@ class Enrollment(models.Model):
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
-        default=Status.PRE_ENROLLED
+        default=Status.SUBMITTED
+    )
+    
+    cv_file = models.FileField(
+        upload_to='enrollments/cvs/',
+        null=True,
+        blank=True,
+        help_text="CV ou Dossier de candidature"
     )
     
     application_date = models.DateTimeField(auto_now_add=True)

@@ -17,6 +17,13 @@ Modèles clés :
 *   **Fat Models, Thin Views** / Couche Service si nécessaire.
 *   **Contrôle d'accès basé sur les rôles (RBAC)** à travers le système.
 
+## Fonctionnalités Principales
+
+*   **Authentification & Inscription**: Système complet avec JWT (Login/Register).
+*   **Catalogue des Formations**: Découverte des programmes avec filtres et recherche.
+*   **Processus de Candidature**: Soumission en ligne (avec CV, motivations) et suivi dynamique de l'état (En attente, Accepté, Refusé).
+*   **Espace Administrateur**: Interface de gestion (Coordinateur/Admin) pour valider ou rejeter les dossiers de candidature.
+
 ### Diagrammes
 
 *   [Diagramme de Cas d'Utilisation](docs/images/use_case_diagram.png)
