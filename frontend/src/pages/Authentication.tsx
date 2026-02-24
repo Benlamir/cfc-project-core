@@ -45,9 +45,28 @@ export function Authentication() {
                 setIsLoading(false);
             }
         } else {
-            // Pour l'enregistrement (si un tel endpoint existe plus tard)
-            setError("L'inscription depuis cet écran est désactivée. Contactez le secrétariat.");
-            setIsLoading(false);
+            // Enregistrement
+            try {
+                await api.post('/users/register/', {
+                    name,
+                    email,
+                    password
+                });
+
+                // Inscription réussie : on le connecte ou on bascule vers login
+                setIsLogin(true);
+                setError('');
+                // Optionnel : on pourrait afficher un message flash "Compte créé, veuillez vous connecter"
+            } catch (err: any) {
+                if (err.response && err.response.data) {
+                    const data = err.response.data;
+                    setError(data.email ? "Cet email est déjà utilisé." : "Erreur lors de l'inscription.");
+                } else {
+                    setError('Erreur de connexion serveur.');
+                }
+            } finally {
+                setIsLoading(false);
+            }
         }
     };
 
