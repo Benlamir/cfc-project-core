@@ -60,7 +60,17 @@ export function Authentication() {
             } catch (err: any) {
                 if (err.response && err.response.data) {
                     const data = err.response.data;
-                    setError(data.email ? "Cet email est déjà utilisé." : "Erreur lors de l'inscription.");
+                    // Extract specific validation messages if available (like django password validators)
+                    if (data.email) {
+                        setError(Array.isArray(data.email) ? data.email[0] : "Cet email est déjà utilisé.");
+                    } else if (data.password) {
+                        setError(Array.isArray(data.password) ? data.password[0] : "Mot de passe invalide.");
+                    } else if (typeof data === 'object' && Object.values(data).length > 0) {
+                        const firstError: any = Object.values(data)[0];
+                        setError(Array.isArray(firstError) ? firstError[0] : "Erreur de validation.");
+                    } else {
+                        setError("Erreur lors de l'inscription.");
+                    }
                 } else {
                     setError('Erreur de connexion serveur.');
                 }
