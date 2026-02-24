@@ -35,7 +35,7 @@ export function FormationDetail() {
         <div className="animate-in fade-in duration-500 pb-12">
             {/* Back Button */}
             <div className="max-w-6xl mx-auto px-4 pt-6 pb-4">
-                <Link to="/" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary transition-colors">
+                <Link to="/dashboard" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary transition-colors">
                     <ChevronLeft className="mr-1 h-4 w-4" />
                     Retour au catalogue
                 </Link>

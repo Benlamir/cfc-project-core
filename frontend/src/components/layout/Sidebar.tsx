@@ -9,11 +9,11 @@ import {
 import { cn } from '../../lib/utils';
 
 const navigation = [
-    { name: 'Tableau de bord', href: '/', icon: LayoutDashboard },
-    { name: 'Formations', href: '/formations', icon: BookOpen },
-    { name: 'Candidats', href: '/candidats', icon: Users },
-    { name: 'Établissements', href: '/etablissements', icon: GraduationCap },
-    { name: 'Paramètres', href: '/parametres', icon: Settings },
+    { name: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Formations', href: '/dashboard/formations', icon: BookOpen },
+    { name: 'Candidats', href: '/dashboard/candidats', icon: Users },
+    { name: 'Établissements', href: '/dashboard/etablissements', icon: GraduationCap },
+    { name: 'Paramètres', href: '/dashboard/parametres', icon: Settings },
 ];
 
 export function Sidebar() {

@@ -96,7 +96,7 @@ export function Authentication() {
                         </div>
 
                         <div className="mt-8 text-center text-xs text-slate-400">
-                            <Link to="/" className="hover:text-primary transition-colors hover:underline">
+                            <Link to="/dashboard" className="hover:text-primary transition-colors hover:underline">
                                 Continuer vers l'accueil (Demo)
                             </Link>
                         </div>

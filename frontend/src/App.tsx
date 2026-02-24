@@ -8,9 +8,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/auth" element={<Authentication />} />
+        <Route path="/" element={<Authentication />} />
 
-        <Route path="/" element={<MainLayout />}>
+        <Route path="/dashboard" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="formations/:id" element={<FormationDetail />} />
           <Route path="formations" element={<div className="p-4">Pages des Formations (En construction)</div>} />

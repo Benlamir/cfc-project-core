@@ -96,7 +96,7 @@ export function Home() {
             {/* Grid of Cards */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {formations.map((form) => (
-                    <Link to={`/formations/${form.id}`} key={form.id} className="block group">
+                    <Link to={`/dashboard/formations/${form.id}`} key={form.id} className="block group">
                         <Card className="h-full hover:-translate-y-1 hover:shadow-xl transition-all duration-300 border-slate-100 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 cursor-pointer">
                             <CardContent className="p-0 flex flex-col h-full">
                                 {/* Card Banner Top */}
