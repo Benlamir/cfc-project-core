@@ -1,11 +1,55 @@
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Mail, Lock, BookOpen } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Mail, Lock, BookOpen, AlertCircle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export function Authentication() {
     const [isLogin, setIsLogin] = React.useState(true);
+    const [email, setEmail] = React.useState('');
+    const [password, setPassword] = React.useState('');
+    const [name, setName] = React.useState(''); // Used for register
+    const [error, setError] = React.useState('');
+    const [isLoading, setIsLoading] = React.useState(false);
+
+    const navigate = useNavigate();
+    const { login } = useAuth();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
+
+        if (isLogin) {
+            // 1. Appel du backend Django (similaire jwt setup)
+            try {
+                const response = await api.post('/token/', {
+                    email,
+                    password
+                });
+
+                // 2. Connexion dans notre context si 200 OK
+                if (response.data.access) {
+                    login(response.data.access, response.data.refresh);
+                    navigate('/dashboard');
+                }
+            } catch (err: any) {
+                if (err.response && err.response.status === 401) {
+                    setError('Email ou mot de passe incorrect.');
+                } else {
+                    setError('Erreur de connexion serveur.');
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        } else {
+            // Pour l'enregistrement (si un tel endpoint existe plus tard)
+            setError("L'inscription depuis cet écran est désactivée. Contactez le secrétariat.");
+            setIsLoading(false);
+        }
+    };
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
@@ -32,16 +76,24 @@ export function Authentication() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form className="space-y-4">
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm border border-red-200 flex items-center">
+                                <AlertCircle className="w-4 h-4 mr-2" />
+                                {error}
+                            </div>
+                        )}
+                        <form className="space-y-4" onSubmit={handleSubmit}>
                             {!isLogin && (
                                 <div className="space-y-2">
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 নাঁ0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                                         </div>
                                         <input
                                             type="text"
                                             placeholder="Nom complet"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
                                             className="flex h-11 w-full rounded-[8px] border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-10"
                                         />
                                     </div>
@@ -56,6 +108,9 @@ export function Authentication() {
                                     <input
                                         type="email"
                                         placeholder="Adresse e-mail"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         className="flex h-11 w-full rounded-[8px] border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-10"
                                     />
                                 </div>
@@ -69,6 +124,9 @@ export function Authentication() {
                                     <input
                                         type="password"
                                         placeholder="Mot de passe"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         className="flex h-11 w-full rounded-[8px] border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-10"
                                     />
                                 </div>
@@ -79,7 +137,7 @@ export function Authentication() {
                                 )}
                             </div>
 
-                            <Button type="button" fullWidth className="mt-6 bg-emerald-700 hover:bg-emerald-800 text-white shadow-md">
+                            <Button type="submit" isLoading={isLoading} fullWidth className="mt-6 bg-emerald-700 hover:bg-emerald-800 text-white shadow-md">
                                 {isLogin ? 'Se connecter' : "S'inscrire"}
                             </Button>
                         </form>
@@ -88,7 +146,7 @@ export function Authentication() {
                             {isLogin ? "Vous n'avez pas de compte ?" : "Vous avez déjà un compte ?"}
                             <button
                                 type="button"
-                                onClick={() => setIsLogin(!isLogin)}
+                                onClick={() => { setIsLogin(!isLogin); setError(''); }}
                                 className="ml-1 text-primary font-medium hover:underline focus:outline-none"
                             >
                                 {isLogin ? "S'inscrire" : 'Se connecter'}
@@ -97,7 +155,7 @@ export function Authentication() {
 
                         <div className="mt-8 text-center text-xs text-slate-400">
                             <Link to="/dashboard" className="hover:text-primary transition-colors hover:underline">
-                                Continuer vers l'accueil (Demo)
+                                Continuer vers l'accueil (Bypass Demo)
                             </Link>
                         </div>
                     </CardContent>
