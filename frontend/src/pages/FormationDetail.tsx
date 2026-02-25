@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
-import { Clock, MapPin, GraduationCap, Calendar, CheckCircle2, ChevronLeft, Users, BookOpen, X, Upload, FileText } from 'lucide-react';
+import { Clock, MapPin, GraduationCap, Calendar, CheckCircle2, ChevronLeft, Users, BookOpen, X, Upload, FileText, ArrowRight, Check, XCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../lib/api';
 
@@ -12,21 +12,35 @@ export function FormationDetail() {
 
     // Modal & Form State
     const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [currentStep, setCurrentStep] = React.useState(1);
+
+    // Step 1: Profil
     const [firstName, setFirstName] = React.useState('');
     const [lastName, setLastName] = React.useState('');
     const [email, setEmail] = React.useState('');
     const [phone, setPhone] = React.useState('');
+    const [cin, setCin] = React.useState('');
+
+    // Step 2: Pédagogie
+    const [lastDegree, setLastDegree] = React.useState('');
+    const [origEtab, setOrigEtab] = React.useState('');
+    const [gradYear, setGradYear] = React.useState('');
+
+    // Step 3: Uploads & Motivation
     const [motivation, setMotivation] = React.useState('');
     const [cvFile, setCvFile] = React.useState<File | null>(null);
+    const [diplomeFile, setDiplomeFile] = React.useState<File | null>(null);
+
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const [error, setError] = React.useState('');
+    const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({});
+    const [globalError, setGlobalError] = React.useState('');
     const [success, setSuccess] = React.useState(false);
 
     React.useEffect(() => {
         if (user) {
             setFirstName((user as any).first_name || '');
             setLastName((user as any).last_name || '');
-            setEmail(user.email || '');
+            // L'email doit être vide par défaut selon la demande
         }
     }, [user]);
 
@@ -43,10 +57,10 @@ export function FormationDetail() {
         placesTotal: 30,
         placesRestantes: 12,
         prix: "45 000 MAD / an",
-        description: "Ce Master forme des cadres de haut niveau capables de concevoir, développer et gérer des systèmes d'information complexes. Le programme met l'accent sur les architectures modernes, le cloud computing, et la gestion de projets agiles.",
+        description: "Ce Master forme des cadres de haut niveau capables de concevoir, développer et gérer des systèmes d'information complexes.",
         prerequis: [
             "Licence en Informatique ou diplôme équivalent",
-            "Bon niveau en programmation (Java, Python, C++)",
+            "Bon niveau en programmation",
             "Bases de données relationnelles"
         ],
         objectifs: [
@@ -57,91 +71,130 @@ export function FormationDetail() {
         ]
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            setCvFile(e.target.files[0]);
-            setError('');
+    const validateStep = (step: number) => {
+        const errors: Record<string, string> = {};
+        if (step === 1) {
+            if (!firstName) errors.firstName = 'Le prénom est requis.';
+            if (!lastName) errors.lastName = 'Le nom est requis.';
+            if (!email) errors.email = 'L\'email est requis.';
+            if (!phone) errors.phone = 'Le numéro de téléphone est requis.';
+            if (!cin) errors.cin = 'Le numéro de CIN est requis.';
+        } else if (step === 2) {
+            if (!lastDegree) errors.lastDegree = 'Le dernier diplôme est requis.';
+            if (!origEtab) errors.origEtab = 'L\'établissement d\'origine est requis.';
+            if (!gradYear) errors.gradYear = 'L\'année d\'obtention est requise.';
+        } else if (step === 3) {
+            if (!cvFile) errors.cvFile = 'Le CV est requis.';
+            else if (cvFile.size > 5 * 1024 * 1024) errors.cvFile = '5 Mo maximum.';
+
+            if (!diplomeFile) errors.diplomeFile = 'Le diplôme est requis.';
+            else if (diplomeFile.size > 5 * 1024 * 1024) errors.diplomeFile = '5 Mo maximum.';
+        }
+
+        setFieldErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const nextStep = () => {
+        if (validateStep(currentStep)) {
+            setCurrentStep(s => s + 1);
+            setGlobalError('');
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const prevStep = () => setCurrentStep(s => s - 1);
+
+    const handleFileDrop = (e: React.DragEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<File | null>>) => {
         e.preventDefault();
-        setError('');
-
-        if (!cvFile) {
-            setError('Veuillez joindre votre CV.');
-            return;
+        const file = e.dataTransfer.files?.[0];
+        if (file) {
+            setter(file);
+            setFieldErrors(prev => ({ ...prev, global: '' }));
         }
+    };
 
-        // File validation: 5MB max
-        if (cvFile.size > 5 * 1024 * 1024) {
-            setError('Le fichier ne doit pas dépasser 5 Mo.');
-            return;
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<File | null>>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setter(file);
+            setFieldErrors(prev => ({ ...prev, global: '' }));
         }
+    };
 
-        // File validation: PDF and Word docs
-        const acceptedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-        if (!acceptedTypes.includes(cvFile.type)) {
-            setError('Seuls les formats PDF et Word (.doc, .docx) sont acceptés.');
-            return;
-        }
+    const handleSubmit = async () => {
+        if (!validateStep(3)) return; // double check Before API
 
-        if (!firstName || !lastName || !email || !phone) {
-            setError('Veuillez remplir tous les champs obligatoires.');
-            return;
-        }
-
+        setGlobalError('');
         setIsSubmitting(true);
 
         try {
             const formData = new FormData();
             formData.append('course', formation.id.toString());
-            formData.append('cv_file', cvFile);
+            if (cvFile) formData.append('cv_file', cvFile);
+            if (diplomeFile) formData.append('diplome_file', diplomeFile);
 
             const documentsData = {
                 first_name: firstName,
                 last_name: lastName,
                 email: email,
                 phone: phone,
+                cin: cin,
+                dernier_diplome: lastDegree,
+                etablissement_origine: origEtab,
+                annee_obtention: gradYear,
                 motivation: motivation
             };
             formData.append('documents', JSON.stringify(documentsData));
 
-            // Submitting as multipart/form-data
             await api.post('/enrollments/', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
 
             setSuccess(true);
             setTimeout(() => {
                 setIsModalOpen(false);
                 setSuccess(false);
+                setCurrentStep(1); // reset for next time
                 navigate('/dashboard/mes-candidatures');
             }, 2000);
 
         } catch (err: any) {
             console.error(err);
-            if (err.response?.data) {
+            if (err.response?.status === 400 || err.response?.status === 422) {
                 const data = err.response.data;
+                const fieldErr: Record<string, string> = {};
+                let hasGlobalError = false;
+
                 if (Array.isArray(data)) {
-                    setError(data[0]);
-                } else if (data.non_field_errors) {
-                    setError(data.non_field_errors[0]);
+                    // Les erreurs globales du backend (ex: Vous êtes déjà inscrit)
+                    setGlobalError(data[0]);
+                    hasGlobalError = true;
                 } else if (typeof data === 'object') {
-                    // Extract the first key's error message
-                    const firstKey = Object.keys(data)[0];
-                    if (Array.isArray(data[firstKey])) {
-                        setError(data[firstKey][0]);
-                    } else {
-                        setError(JSON.stringify(data));
+                    for (const [key, val] of Object.entries(data)) {
+                        const errorMsg = Array.isArray(val) ? val[0] : (val as string);
+
+                        // Mappage des clés du backend vers l'état du frontend
+                        if (key === 'non_field_errors' || key === 'course') {
+                            setGlobalError(errorMsg);
+                            hasGlobalError = true;
+                        } else if (key === 'cv_file') {
+                            fieldErr.cvFile = errorMsg;
+                        } else if (key === 'diplome_file') {
+                            fieldErr.diplomeFile = errorMsg;
+                        } else {
+                            fieldErr[key] = errorMsg; // Par défaut (first_name, last_name, etc.)
+                        }
+                    }
+                    setFieldErrors(fieldErr);
+
+                    if (!hasGlobalError && Object.keys(fieldErr).length > 0) {
+                        setGlobalError("Certaines informations de votre dossier sont invalides. Veuillez vérifier les champs ci-dessous.");
                     }
                 } else {
-                    setError('Erreur lors de la soumission.');
+                    setGlobalError('Erreur de validation des données.');
                 }
             } else {
-                setError('Impossible de se connecter au serveur.');
+                setGlobalError("Impossible de se connecter au serveur ou erreur inconnue.");
             }
         } finally {
             setIsSubmitting(false);
@@ -312,161 +365,333 @@ export function FormationDetail() {
                 </div>
             </div>
 
-            {/* Application Modal */}
+            {/* Application Modal (Stepper) */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative">
-                        {/* Close button */}
-                        <button
-                            onClick={() => !isSubmitting && !success && setIsModalOpen(false)}
-                            className="absolute right-4 top-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                        >
-                            <X className="h-5 w-5" />
-                        </button>
+                    <div className="bg-white dark:bg-slate-900 rounded-[8px] w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl relative flex flex-col">
 
-                        <div className="p-8">
-                            {success ? (
-                                <div className="text-center py-12 animate-in zoom-in duration-300">
-                                    <div className="h-20 w-20 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <CheckCircle2 className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
-                                    </div>
-                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Candidature Soumise !</h2>
-                                    <p className="text-slate-600 dark:text-slate-400">
-                                        Votre dossier pour <span className="font-semibold text-slate-800 dark:text-slate-200">{formation.title}</span> a bien été transmis.
-                                    </p>
-                                    <p className="text-sm text-slate-500 mt-4">Redirection vers vos candidatures...</p>
+                        {/* Header & Close */}
+                        <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Dossier de candidature</h2>
+                            <button
+                                onClick={() => !isSubmitting && !success && setIsModalOpen(false)}
+                                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-[8px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        {success ? (
+                            <div className="p-12 text-center animate-in zoom-in duration-300 flex-grow">
+                                <div className="h-20 w-20 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <CheckCircle2 className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
                                 </div>
-                            ) : (
-                                <>
-                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 pr-8">
-                                        Dossier de candidature
-                                    </h2>
-                                    <p className="text-slate-500 dark:text-slate-400 mb-8 pb-4 border-b border-slate-100 dark:border-slate-800">
-                                        Vous postulez pour : <strong className="text-slate-700 dark:text-slate-300">{formation.title}</strong>
-                                    </p>
+                                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Candidature Soumise !</h3>
+                                <p className="text-slate-600 dark:text-slate-400">
+                                    Votre dossier pour <span className="font-semibold text-slate-800 dark:text-slate-200">{formation.title}</span> a bien été transmis.
+                                </p>
+                                <p className="text-sm text-slate-500 mt-4">Redirection vers vos candidatures...</p>
+                            </div>
+                        ) : (
+                            <div className="p-6 flex-grow flex flex-col">
+                                {/* Stepper Progress */}
+                                <div className="mb-8">
+                                    <div className="flex justify-between items-center relative">
+                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 dark:bg-slate-800 z-0"></div>
+                                        <div
+                                            className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-emerald-600 transition-all duration-300 z-0"
+                                            style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
+                                        ></div>
 
-                                    {error && (
-                                        <div className="mb-6 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
-                                            {error}
+                                        {[1, 2, 3, 4].map(step => (
+                                            <div key={step} className="relative z-10 flex flex-col items-center gap-2">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${step < currentStep ? 'bg-emerald-600 border-emerald-600 text-white' :
+                                                    step === currentStep ? 'bg-white dark:bg-slate-900 border-emerald-600 text-emerald-600' :
+                                                        'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-400'
+                                                    }`}>
+                                                    {step < currentStep ? <Check className="h-4 w-4" /> : step}
+                                                </div>
+                                                <span className={`text-xs font-medium hidden sm:block ${step <= currentStep ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400'}`}>
+                                                    {step === 1 ? 'Profil' : step === 2 ? 'Parcours' : step === 3 ? 'Documents' : 'Aperçu'}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {globalError && (
+                                    <div className="mb-6 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 px-4 py-3 rounded-[8px] text-sm flex items-center gap-2">
+                                        <XCircle className="h-5 w-5 shrink-0" />
+                                        <span>{globalError}</span>
+                                    </div>
+                                )}
+
+                                {/* Form Body */}
+                                <div className="flex-grow">
+                                    {/* STEP 1: PROFIL */}
+                                    {currentStep === 1 && (
+                                        <div className="space-y-5 animate-in slide-in-from-right-4 fade-in duration-300">
+                                            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4 border-b pb-2 dark:border-slate-800">1. Informations Personnelles</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Prénom *</label>
+                                                    <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                                                        className={`w-full h-11 px-4 rounded-[8px] bg-white border ${fieldErrors.firstName ? 'border-red-500' : 'border-slate-200'} text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow dark:bg-slate-900 dark:border-slate-700 dark:text-white`}
+                                                    />
+                                                    {fieldErrors.firstName && <p className="text-red-500 text-xs mt-1">{fieldErrors.firstName}</p>}
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nom *</label>
+                                                    <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)}
+                                                        className={`w-full h-11 px-4 rounded-[8px] bg-white border ${fieldErrors.lastName ? 'border-red-500' : 'border-slate-200'} text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow dark:bg-slate-900 dark:border-slate-700 dark:text-white`}
+                                                    />
+                                                    {fieldErrors.lastName && <p className="text-red-500 text-xs mt-1">{fieldErrors.lastName}</p>}
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email *</label>
+                                                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                                                        className={`w-full h-11 px-4 rounded-[8px] bg-slate-50 border ${fieldErrors.email ? 'border-red-500' : 'border-slate-200'} text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow dark:bg-slate-800 dark:border-slate-700 dark:text-white`}
+                                                    />
+                                                    {fieldErrors.email && <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>}
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Téléphone *</label>
+                                                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+                                                        className={`w-full h-11 px-4 rounded-[8px] bg-white border ${fieldErrors.phone ? 'border-red-500' : 'border-slate-200'} text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow dark:bg-slate-900 dark:border-slate-700 dark:text-white`}
+                                                    />
+                                                    {fieldErrors.phone && <p className="text-red-500 text-xs mt-1">{fieldErrors.phone}</p>}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">CIN / Passeport *</label>
+                                                <input type="text" value={cin} onChange={(e) => setCin(e.target.value)}
+                                                    className={`w-full h-11 px-4 rounded-[8px] bg-white border ${fieldErrors.cin ? 'border-red-500' : 'border-slate-200'} text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow dark:bg-slate-900 dark:border-slate-700 dark:text-white`}
+                                                />
+                                                {fieldErrors.cin && <p className="text-red-500 text-xs mt-1">{fieldErrors.cin}</p>}
+                                            </div>
                                         </div>
                                     )}
 
-                                    <form onSubmit={handleSubmit} className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* STEP 2: PEDAGOGIE */}
+                                    {currentStep === 2 && (
+                                        <div className="space-y-5 animate-in slide-in-from-right-4 fade-in duration-300">
+                                            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4 border-b pb-2 dark:border-slate-800">2. Parcours Académique</h3>
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Prénom *</label>
-                                                <input
-                                                    type="text"
-                                                    value={firstName}
-                                                    onChange={(e) => setFirstName(e.target.value)}
-                                                    required
-                                                    className="w-full h-11 px-4 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow dark:bg-slate-900 dark:border-slate-700 dark:text-white dark:focus:ring-emerald-500"
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Dernier diplôme obtenu *</label>
+                                                <input type="text" value={lastDegree} onChange={(e) => setLastDegree(e.target.value)} placeholder="ex: Licence Fondamentale en Informatique"
+                                                    className={`w-full h-11 px-4 rounded-[8px] bg-white border ${fieldErrors.lastDegree ? 'border-red-500' : 'border-slate-200'} text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow dark:bg-slate-900 dark:border-slate-700 dark:text-white`}
                                                 />
+                                                {fieldErrors.lastDegree && <p className="text-red-500 text-xs mt-1">{fieldErrors.lastDegree}</p>}
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Nom de famille *</label>
-                                                <input
-                                                    type="text"
-                                                    value={lastName}
-                                                    onChange={(e) => setLastName(e.target.value)}
-                                                    required
-                                                    className="w-full h-11 px-4 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow dark:bg-slate-900 dark:border-slate-700 dark:text-white dark:focus:ring-emerald-500"
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Établissement d'origine *</label>
+                                                <input type="text" value={origEtab} onChange={(e) => setOrigEtab(e.target.value)} placeholder="ex: FST Settat"
+                                                    className={`w-full h-11 px-4 rounded-[8px] bg-white border ${fieldErrors.origEtab ? 'border-red-500' : 'border-slate-200'} text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow dark:bg-slate-900 dark:border-slate-700 dark:text-white`}
                                                 />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email *</label>
-                                                <input
-                                                    type="email"
-                                                    required
-                                                    placeholder="votre@email.com"
-                                                    value={email}
-                                                    onChange={(e) => setEmail(e.target.value)}
-                                                    className="w-full h-11 px-4 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow dark:bg-slate-900 dark:border-slate-700 dark:text-white dark:focus:ring-emerald-500"
-                                                />
+                                                {fieldErrors.origEtab && <p className="text-red-500 text-xs mt-1">{fieldErrors.origEtab}</p>}
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Téléphone *</label>
-                                                <input
-                                                    type="tel"
-                                                    required
-                                                    placeholder="+212 6..."
-                                                    value={phone}
-                                                    onChange={(e) => setPhone(e.target.value)}
-                                                    className="w-full h-11 px-4 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow dark:bg-slate-900 dark:border-slate-700 dark:text-white dark:focus:ring-emerald-500"
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Année d'obtention *</label>
+                                                <input type="number" min="1990" max="2030" value={gradYear} onChange={(e) => setGradYear(e.target.value)} placeholder="ex: 2023"
+                                                    className={`w-full h-11 px-4 rounded-[8px] bg-white border ${fieldErrors.gradYear ? 'border-red-500' : 'border-slate-200'} text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow dark:bg-slate-900 dark:border-slate-700 dark:text-white`}
                                                 />
+                                                {fieldErrors.gradYear && <p className="text-red-500 text-xs mt-1">{fieldErrors.gradYear}</p>}
                                             </div>
                                         </div>
+                                    )}
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Lettre de motivation (Optionnelle)</label>
-                                            <textarea
-                                                rows={4}
-                                                placeholder="Partagez vos motivations pour ce programme..."
-                                                value={motivation}
-                                                onChange={(e) => setMotivation(e.target.value)}
-                                                className="w-full p-4 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow resize-none dark:bg-slate-900 dark:border-slate-700 dark:text-white dark:focus:ring-emerald-500"
-                                            />
-                                        </div>
+                                    {/* STEP 3: UPLOAD */}
+                                    {currentStep === 3 && (
+                                        <div className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
+                                            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-2 border-b pb-2 dark:border-slate-800">3. Pièces Jointes & Motivation</h3>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
-                                                <span>CV ou Dossier complet *</span>
-                                                <span className="text-xs text-slate-400 font-normal">PDF/Word, max 5Mo</span>
-                                            </label>
-                                            <div className="relative border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                                                <input
-                                                    type="file"
-                                                    accept=".pdf,.doc,.docx"
-                                                    onChange={handleFileChange}
-                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                />
-                                                <div className="flex flex-col items-center justify-center text-center pointer-events-none">
+                                            {/* Dropzone CV */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Curriculum Vitae (CV) * <span className="text-xs text-slate-400 font-normal">PDF/Word, max 5Mo</span></label>
+                                                <div
+                                                    onDragOver={(e) => e.preventDefault()}
+                                                    onDrop={(e) => handleFileDrop(e, setCvFile)}
+                                                    className={`relative border-2 border-dashed rounded-[8px] p-6 text-center transition-colors group cursor-pointer ${fieldErrors.cvFile ? 'border-red-400 bg-red-50 dark:bg-red-900/10' : 'border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
+                                                >
+                                                    <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => handleFileSelect(e, setCvFile)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                                                     {cvFile ? (
-                                                        <>
-                                                            <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mb-3">
-                                                                <FileText className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                                                            </div>
-                                                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-full px-4">{cvFile.name}</p>
-                                                            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-medium">Fichier sélectionné</p>
-                                                        </>
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mb-2"><FileText className="h-5 w-5 text-emerald-600" /></div>
+                                                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[250px]">{cvFile.name}</p>
+                                                        </div>
                                                     ) : (
-                                                        <>
-                                                            <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3 group-hover:bg-white dark:group-hover:bg-slate-700 transition-colors">
-                                                                <Upload className="h-6 w-6 text-slate-500 dark:text-slate-400" />
-                                                            </div>
-                                                            <p className="text-sm font-medium text-slate-900 dark:text-white">Cliquez pour ajouter votre CV</p>
-                                                            <p className="text-xs text-slate-500 mt-1">ou glissez-déposez le fichier ici</p>
-                                                        </>
+                                                        <div className="flex flex-col items-center">
+                                                            <Upload className="h-8 w-8 text-slate-400 mb-2" />
+                                                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Glissez-déposez ou cliquez ici</p>
+                                                        </div>
                                                     )}
+                                                </div>
+                                                {fieldErrors.cvFile && <p className="text-red-500 text-xs mt-1">{fieldErrors.cvFile}</p>}
+                                            </div>
+
+                                            {/* Dropzone Diplôme */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Dernier Diplôme * <span className="text-xs text-slate-400 font-normal">PDF/Word/Images, max 5Mo</span></label>
+                                                <div
+                                                    onDragOver={(e) => e.preventDefault()}
+                                                    onDrop={(e) => handleFileDrop(e, setDiplomeFile)}
+                                                    className={`relative border-2 border-dashed rounded-[8px] p-6 text-center transition-colors group cursor-pointer ${fieldErrors.diplomeFile ? 'border-red-400 bg-red-50 dark:bg-red-900/10' : 'border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
+                                                >
+                                                    <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onChange={(e) => handleFileSelect(e, setDiplomeFile)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                                    {diplomeFile ? (
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mb-2"><FileText className="h-5 w-5 text-emerald-600" /></div>
+                                                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[250px]">{diplomeFile.name}</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-col items-center">
+                                                            <Upload className="h-8 w-8 text-slate-400 mb-2" />
+                                                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Glissez-déposez ou cliquez ici</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {fieldErrors.diplomeFile && <p className="text-red-500 text-xs mt-1">{fieldErrors.diplomeFile}</p>}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Lettre de motivation (Optionnelle)</label>
+                                                <textarea rows={3} value={motivation} onChange={(e) => setMotivation(e.target.value)}
+                                                    className="w-full p-4 rounded-[8px] bg-white border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+                                                    placeholder="Pourquoi postulez-vous ?"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* STEP 4: REVIEW */}
+                                    {currentStep === 4 && (
+                                        <div className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
+                                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 border-b pb-4 dark:border-slate-800">
+                                                4. Aperçu de votre dossier
+                                            </h3>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {/* Informations personnelles */}
+                                                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 border border-slate-100 dark:border-slate-700">
+                                                    <div className="flex items-center gap-2 mb-4">
+                                                        <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                                                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">Informations personnelles</h4>
+                                                    </div>
+                                                    <div className="space-y-3 text-sm">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-slate-500 dark:text-slate-400">Nom complet</span>
+                                                            <span className="font-medium text-slate-900 dark:text-white">{firstName} {lastName.toUpperCase()}</span>
+                                                        </div>
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-slate-500 dark:text-slate-400">CIN / Passeport</span>
+                                                            <span className="font-medium text-slate-900 dark:text-white">{cin}</span>
+                                                        </div>
+                                                        <div className="flex justify-between border-t border-slate-200 dark:border-slate-700 pt-2 mt-2">
+                                                            <span className="text-slate-500 dark:text-slate-400">Email</span>
+                                                            <span className="font-medium text-slate-900 dark:text-white">{email}</span>
+                                                        </div>
+                                                        <div className="flex justify-between border-t border-slate-200 dark:border-slate-700 pt-2 mt-2">
+                                                            <span className="text-slate-500 dark:text-slate-400">Téléphone</span>
+                                                            <span className="font-medium text-slate-900 dark:text-white">{phone}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Parcours académique */}
+                                                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 border border-slate-100 dark:border-slate-700">
+                                                    <div className="flex items-center gap-2 mb-4">
+                                                        <GraduationCap className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                                                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">Parcours académique</h4>
+                                                    </div>
+                                                    <div className="space-y-3 text-sm">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-slate-500 dark:text-slate-400">Dernier diplôme</span>
+                                                            <span className="font-medium text-slate-900 dark:text-white">{lastDegree}</span>
+                                                        </div>
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-slate-500 dark:text-slate-400">Établissement</span>
+                                                            <span className="font-medium text-slate-900 dark:text-white">{origEtab}</span>
+                                                        </div>
+                                                        <div className="flex justify-between mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                                                            <span className="text-slate-500 dark:text-slate-400">Année d'obtention</span>
+                                                            <span className="font-medium text-slate-900 dark:text-white">{gradYear}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Documents */}
+                                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 border border-slate-100 dark:border-slate-700">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Documents joints</h4>
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                                    <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
+                                                        <div className="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-md shrink-0">
+                                                            <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-0.5">CV</p>
+                                                            <p className="font-medium text-slate-900 dark:text-white truncate">{cvFile?.name || 'Non fourni'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
+                                                        <div className="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-md shrink-0">
+                                                            <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-0.5">Diplôme</p>
+                                                            <p className="font-medium text-slate-900 dark:text-white truncate">{diplomeFile?.name || 'Non fourni'}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Statut / Avertissement */}
+                                            <div className="flex items-start gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 rounded-xl">
+                                                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                                                <div className="text-sm text-emerald-800 dark:text-emerald-300">
+                                                    <p className="font-medium mb-1">Prêt pour la soumission</p>
+                                                    <p className="text-emerald-600/80 dark:text-emerald-400/80">
+                                                        Veuillez vérifier vos informations avant de confirmer l'envoi. Une fois validé, votre dossier passera à l'état "Soumis" et sera examiné par notre équipe.
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
+                                    )}
+                                </div>
 
-                                        <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-4">
-                                            <Button
-                                                variant="outline"
-                                                type="button"
-                                                onClick={() => setIsModalOpen(false)}
-                                                disabled={isSubmitting}
-                                                className="dark:border-slate-700 dark:text-slate-300"
-                                            >
-                                                Annuler
-                                            </Button>
-                                            <Button
-                                                type="submit"
-                                                disabled={isSubmitting || !cvFile}
-                                                className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]"
-                                            >
-                                                {isSubmitting ? 'Envoi...' : 'Confirmer l\'envoi'}
-                                            </Button>
-                                        </div>
-                                    </form>
-                                </>
-                            )}
-                        </div>
+                                {/* Footer Actions */}
+                                <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                                    {currentStep > 1 ? (
+                                        <Button variant="outline" onClick={prevStep} disabled={isSubmitting} className="rounded-[8px] dark:border-slate-700 dark:text-slate-300">
+                                            <ChevronLeft className="h-4 w-4 mr-1" /> Précédent
+                                        </Button>
+                                    ) : (
+                                        <div></div> // Spacer
+                                    )}
+
+                                    {currentStep < 4 ? (
+                                        <Button onClick={nextStep} className="rounded-[8px] bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white">
+                                            Suivant <ArrowRight className="h-4 w-4 ml-2" />
+                                        </Button>
+                                    ) : (
+                                        <Button onClick={handleSubmit} disabled={isSubmitting} className="rounded-[8px] bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]">
+                                            {isSubmitting ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Envoi...
+                                                </div>
+                                            ) : (
+                                                <>Soumettre <Check className="h-4 w-4 ml-2" /></>
+                                            )}
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

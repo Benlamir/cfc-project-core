@@ -121,6 +121,13 @@ class Enrollment(models.Model):
         help_text="CV ou Dossier de candidature"
     )
     
+    diplome_file = models.FileField(
+        upload_to='enrollments/diplomes/',
+        null=True,
+        blank=True,
+        help_text="Copie du dernier diplôme obtenu"
+    )
+    
     application_date = models.DateTimeField(auto_now_add=True)
     rejection_reason = models.TextField(blank=True, null=True)
     

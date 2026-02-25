@@ -48,6 +48,16 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
             models.Q(course__coordinator=user)
         ).distinct()
 
+    def create(self, request, *args, **kwargs):
+        print("REQUEST DATA:", request.data)
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print("VALIDATION ERRORS:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_create(self, serializer):
         from rest_framework import serializers # ensure it's available locally if not at top
         # Vérifier si le candidat a déjà une inscription pour ce cours

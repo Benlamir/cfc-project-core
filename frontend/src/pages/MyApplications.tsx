@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Card, CardContent } from '../components/ui/Card';
-import { BookOpen, Calendar, Clock, Download, FileText, CheckCircle2, XCircle, Activity } from 'lucide-react';
+import { BookOpen, Calendar, Clock, Download, FileText, CheckCircle2, XCircle, Activity, Check } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
@@ -144,7 +144,7 @@ export function MyApplications() {
                                             {app.course_details?.title || 'Formation Introuvable'}
                                         </h3>
 
-                                        <div className="flex flex-wrap gap-y-2 gap-x-6 text-sm text-slate-600 dark:text-slate-400 mb-4">
+                                        <div className="flex flex-wrap gap-y-2 gap-x-6 text-sm text-slate-600 dark:text-slate-400 mb-6">
                                             <div className="flex items-center">
                                                 <Calendar className="mr-2 h-4 w-4 text-emerald-500" />
                                                 Soumis le : {new Date(app.application_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -155,6 +155,47 @@ export function MyApplications() {
                                                     {app.course_details.etablissement_details.name}
                                                 </div>
                                             )}
+                                        </div>
+
+                                        {/* Tracking Stepper */}
+                                        <div className="mt-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between relative max-w-2xl">
+                                                <div className="hidden sm:block absolute left-0 top-4 lg:w-[calc(100%-4rem)] w-[calc(100%-3rem)] h-1 bg-slate-100 dark:bg-slate-800 z-0 ml-6"></div>
+
+                                                {/* Étape 1: Soumis */}
+                                                <div className="relative z-10 flex sm:flex-col items-center gap-3 sm:gap-2 mb-4 sm:mb-0">
+                                                    <div className="w-8 h-8 rounded-full bg-emerald-600 border border-emerald-600 text-white flex items-center justify-center shadow-sm">
+                                                        <Check className="h-4 w-4" />
+                                                    </div>
+                                                    <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 text-center">Soumis</span>
+                                                </div>
+
+                                                {/* Étape 2: En Étude */}
+                                                <div className="relative z-10 flex sm:flex-col items-center gap-3 sm:gap-2 mb-4 sm:mb-0">
+                                                    <div className={`w-8 h-8 rounded-full border flex items-center justify-center shadow-sm z-10 
+                                                        ${['UNDER_REVIEW', 'ACCEPTED', 'FINALIZED', 'REJECTED'].includes(app.status)
+                                                            ? 'bg-emerald-600 border-emerald-600 text-white'
+                                                            : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-400'}`}>
+                                                        {['UNDER_REVIEW', 'ACCEPTED', 'FINALIZED', 'REJECTED'].includes(app.status)
+                                                            ? <Check className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                                                    </div>
+                                                    <span className={`text-xs font-semibold text-center ${['UNDER_REVIEW', 'ACCEPTED', 'FINALIZED', 'REJECTED'].includes(app.status) ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500'}`}>En étude</span>
+                                                </div>
+
+                                                {/* Étape 3: Décision */}
+                                                <div className="relative z-10 flex sm:flex-col items-center gap-3 sm:gap-2">
+                                                    <div className={`w-8 h-8 rounded-full border flex items-center justify-center shadow-sm z-10
+                                                        ${['ACCEPTED', 'FINALIZED'].includes(app.status) ? 'bg-emerald-600 border-emerald-600 text-white' :
+                                                            app.status === 'REJECTED' ? 'bg-red-500 border-red-500 text-white' :
+                                                                'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-400'}`}>
+                                                        {['ACCEPTED', 'FINALIZED'].includes(app.status) ? <Check className="h-4 w-4" /> :
+                                                            app.status === 'REJECTED' ? <XCircle className="h-4 w-4" /> : <Activity className="h-4 w-4" />}
+                                                    </div>
+                                                    <span className={`text-xs font-semibold text-center ${['ACCEPTED', 'FINALIZED'].includes(app.status) ? 'text-emerald-700 dark:text-emerald-400' : app.status === 'REJECTED' ? 'text-red-500' : 'text-slate-500'}`}>
+                                                        {app.status === 'REJECTED' ? 'Refusé' : 'Décision'}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
