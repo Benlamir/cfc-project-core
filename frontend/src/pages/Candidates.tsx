@@ -1,6 +1,7 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/Card';
-import { Users, FileText, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { Users, FileText, Search } from 'lucide-react';
 import api from '../lib/api';
 
 interface Enrollment {
@@ -20,43 +21,32 @@ interface Enrollment {
 
 export function Candidates() {
     const [enrollments, setEnrollments] = React.useState<Enrollment[]>([]);
+    const [courses, setCourses] = React.useState<any[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     const [error, setError] = React.useState('');
     const [searchQuery, setSearchQuery] = React.useState('');
     const [filterStatus, setFilterStatus] = React.useState('');
-    const [isUpdating, setIsUpdating] = React.useState<string | null>(null);
+    const [filterCourse, setFilterCourse] = React.useState('');
 
     React.useEffect(() => {
-        fetchEnrollments();
+        fetchEnrollmentsAndCourses();
     }, []);
 
-    const fetchEnrollments = async () => {
+    const fetchEnrollmentsAndCourses = async () => {
         setIsLoading(true);
         try {
-            const response = await api.get('/enrollments/');
-            setEnrollments(response.data);
+            const [enrollmentsRes, coursesRes] = await Promise.all([
+                api.get('/enrollments/'),
+                api.get('/courses/')
+            ]);
+            setEnrollments(enrollmentsRes.data);
+            setCourses(coursesRes.data);
             setError('');
         } catch (err: any) {
-            console.error('Error fetching enrollments:', err);
-            setError('Impossible de charger les candidatures. Assurez-vous d\'avoir les droits nécessaires (Coordinateur ou Admin).');
+            console.error('Error fetching data:', err);
+            setError('Impossible de charger les données. Assurez-vous d\'avoir les droits nécessaires (Coordinateur ou Admin).');
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const handleUpdateStatus = async (id: string, newStatus: string) => {
-        setIsUpdating(id);
-        try {
-            await api.patch(`/enrollments/${id}/`, { status: newStatus });
-            // Refresh selectively in real scenario, here we just update state
-            setEnrollments(prev =>
-                prev.map(e => e.id === id ? { ...e, status: newStatus } : e)
-            );
-        } catch (err) {
-            console.error('Update status failed', err);
-            alert('Échec de la mise à jour du statut. Permissions insuffisantes.');
-        } finally {
-            setIsUpdating(null);
         }
     };
 
@@ -76,6 +66,8 @@ export function Candidates() {
 
     const filteredEnrollments = enrollments.filter(e => {
         if (filterStatus && e.status !== filterStatus) return false;
+        if (filterCourse && e.course_details.title !== filterCourse) return false;
+
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             return e.course_details.title.toLowerCase().includes(query) ||
@@ -104,7 +96,7 @@ export function Candidates() {
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-64">
+                    <div className="relative flex-1 md:w-48">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <input
                             type="text"
@@ -114,6 +106,18 @@ export function Candidates() {
                             className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         />
                     </div>
+                    <select
+                        value={filterCourse}
+                        onChange={e => setFilterCourse(e.target.value)}
+                        className="py-2 px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[200px]"
+                    >
+                        <option value="">Toutes les formations</option>
+                        {courses.map(course => (
+                            <option key={course.id} value={course.title}>
+                                {course.title.length > 30 ? course.title.substring(0, 30) + '...' : course.title}
+                            </option>
+                        ))}
+                    </select>
                     <select
                         value={filterStatus}
                         onChange={e => setFilterStatus(e.target.value)}
@@ -184,22 +188,12 @@ export function Candidates() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    disabled={isUpdating === enr.id || enr.status === 'ACCEPTED'}
-                                                    onClick={() => handleUpdateStatus(enr.id, 'ACCEPTED')}
-                                                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors disabled:opacity-30"
-                                                    title="Accepter"
+                                                <Link
+                                                    to={`/dashboard/candidats/${enr.id}`}
+                                                    className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm"
                                                 >
-                                                    <CheckCircle2 className="h-5 w-5" />
-                                                </button>
-                                                <button
-                                                    disabled={isUpdating === enr.id || enr.status === 'REJECTED'}
-                                                    onClick={() => handleUpdateStatus(enr.id, 'REJECTED')}
-                                                    className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-30"
-                                                    title="Refuser"
-                                                >
-                                                    <XCircle className="h-5 w-5" />
-                                                </button>
+                                                    Examiner
+                                                </Link>
                                             </div>
                                         </td>
                                     </tr>

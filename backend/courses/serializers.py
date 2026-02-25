@@ -42,7 +42,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Enrollment
         fields = ['id', 'course', 'course_details', 'candidate', 'status', 'application_date', 'rejection_reason', 'documents', 'cv_file', 'diplome_file']
-        read_only_fields = ['id', 'candidate', 'status', 'application_date', 'rejection_reason']
+        read_only_fields = ['id', 'candidate', 'application_date']
         # 'candidate' est read-only car il sera rempli automatiquement avec l'user connecté
         # 'status' est read-only pour la création (commence toujours à PRE_ENROLLED)
 

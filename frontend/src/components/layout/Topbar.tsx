@@ -4,7 +4,11 @@ import { Button } from '../ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-export function Topbar() {
+export interface TopbarProps {
+    customTitle?: string;
+}
+
+export function Topbar({ customTitle }: TopbarProps) {
     const [isDark, setIsDark] = React.useState(false);
     const [isProfileOpen, setIsProfileOpen] = React.useState(false);
     const [isNotifOpen, setIsNotifOpen] = React.useState(false);
@@ -52,8 +56,8 @@ export function Topbar() {
                 <Button variant="ghost" size="icon" className="lg:hidden hover:bg-slate-100 dark:hover:bg-slate-800">
                     <Menu className="h-5 w-5" />
                 </Button>
-                <div className="font-semibold text-lg hidden md:block">
-                    <span className="text-primary-600">CFC</span> Dashboard
+                <div className="font-semibold text-lg hidden md:block text-slate-800 dark:text-slate-100">
+                    <span className="text-emerald-600 dark:text-emerald-500">CFC</span> {customTitle || 'Dashboard'}
                 </div>
             </div>
 

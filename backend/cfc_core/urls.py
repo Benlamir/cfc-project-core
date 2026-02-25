@@ -26,6 +26,10 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+class CustomTokenObtainPairView(TokenObtainPairView):
+    from users.serializers import CustomTokenObtainPairSerializer
+    serializer_class = CustomTokenObtainPairSerializer
+
 schema_view = get_schema_view(
     openapi.Info(
         title="CFC Project API",
@@ -45,7 +49,7 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     
     # JWT Auth
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     # Swagger / Redoc Documentation

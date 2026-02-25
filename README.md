@@ -22,7 +22,16 @@ Modèles clés :
 *   **Authentification & Inscription**: Système complet avec JWT (Login/Register).
 *   **Catalogue des Formations**: Découverte des programmes avec filtres et recherche.
 *   **Processus de Candidature**: Soumission en ligne (avec CV, motivations) et suivi dynamique de l'état (En attente, Accepté, Refusé).
-*   **Espace Administrateur**: Interface de gestion (Coordinateur/Admin) pour valider ou rejeter les dossiers de candidature.
+*   **Espace Administrateur / Coordinateur**: 
+    *   Tableau de bord de suivi d'activité (KPIs, Statistiques Recharts).
+    *   Gestion CRUD complète du catalogue de Formations (Dates, Capacités, Statuts).
+    *   Modération avancée des dossiers avec interface de visionnage PDF et filtres croisés de tri par formation.
+*   **Espace Direction d'Établissement**: 
+    *   Reporting analytique dédié simulant l'attractivité et la conversion des formations locales.
+*   **Sécurité et Routage Global**:
+    *   Custom JWT Claims (intégration DRF native pour l'extraction des rôles).
+    *   *Route Guards* (composants React empêchant l'accès non autorisé et diffusant des `Error403`).
+    *   *Role-based Layouts* (interfaces graphiques isolées entre les Candidats, les Coordinateurs, et les Super Administrateurs).
 
 ### Diagrammes
 

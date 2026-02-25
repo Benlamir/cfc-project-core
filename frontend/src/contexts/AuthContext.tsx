@@ -5,6 +5,8 @@ interface User {
     id?: number;
     email: string;
     role?: string;
+    first_name?: string;
+    last_name?: string;
 }
 
 interface AuthContextType {
@@ -36,7 +38,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     setUser({
                         id: decoded.user_id,
                         email: decoded.email || 'Utilisateur',
-                        // Extrait d'autres rôles si ajoutés via SimpleJWT custom claims
+                        role: decoded.role || 'CANDIDATE',
+                        first_name: decoded.first_name || '',
+                        last_name: decoded.last_name || ''
                     });
                 } catch (error) {
                     console.error("Erreur de session:", error);
@@ -58,6 +62,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser({
                 id: decoded.user_id,
                 email: decoded.email || 'Utilisateur connecté',
+                role: decoded.role || 'CANDIDATE',
+                first_name: decoded.first_name || '',
+                last_name: decoded.last_name || ''
             });
         } catch (err) {
             console.error("Invalid token format on login:", err);

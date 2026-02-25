@@ -59,22 +59,24 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
-        from rest_framework import serializers # ensure it's available locally if not at top
+        from rest_framework import serializers 
         # Vérifier si le candidat a déjà une inscription pour ce cours
         course = serializer.validated_data['course']
         if Enrollment.objects.filter(course=course, candidate=self.request.user).exists():
-            raise serializers.ValidationError("Vous êtes déjà inscrit à ce cours.")
+            raise serializers.ValidationError({"course": "Vous êtes déjà inscrit à ce cours."})
             
-        # Assigner automatiquement le candidat connecté
-        serializer.save(candidate=self.request.user)
+        # Assigner automatiquement le candidat connecté et forcer le statut initial pour ignorer les tentatives directes
+        serializer.save(candidate=self.request.user, status=Enrollment.Status.SUBMITTED, rejection_reason='')
         
     def perform_update(self, serializer):
         from rest_framework.exceptions import PermissionDenied
         user = self.request.user
         instance = self.get_object()
         
-        # Check if 'status' is being updated
-        if 'status' in serializer.validated_data:
+        # Check if 'status' or 'rejection_reason' is being updated by a non-coordinator
+        updating_restricted_fields = 'status' in serializer.validated_data or 'rejection_reason' in serializer.validated_data
+        
+        if updating_restricted_fields:
             # Only superusers or the course coordinator can change the status
             if not (user.is_superuser or instance.course.coordinator == user):
                 raise PermissionDenied("Vous n'êtes pas autorisé à modifier le statut de cette candidature.")
