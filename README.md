@@ -28,10 +28,14 @@ Modèles clés :
     *   Modération avancée des dossiers avec interface de visionnage PDF et filtres croisés de tri par formation.
 *   **Espace Direction d'Établissement**: 
     *   Reporting analytique dédié simulant l'attractivité et la conversion des formations locales.
+*   **Interface Super Administration (Globale)**:
+    *   Gestion Multi-Entités (CRUD complet des Établissements avec Logos).
+    *   Gestion des Comptes Utilisateurs privilégiés (Création et assignation des Admins d'Établissements, Réinitialisation des mots de passe).
+    *   Configuration Globale du Système (Mise en place d'une Année Universitaire cible, Activation d'un Mode Maintenance d'urgence).
 *   **Sécurité et Routage Global**:
     *   Custom JWT Claims (intégration DRF native pour l'extraction des rôles).
     *   *Route Guards* (composants React empêchant l'accès non autorisé et diffusant des `Error403`).
-    *   *Role-based Layouts* (interfaces graphiques isolées entre les Candidats, les Coordinateurs, et les Super Administrateurs).
+    *   *Role-based Layouts* (interfaces graphiques isolées entre les Candidats, Coordinateurs, Admins d'Établissements et Super Administrateurs).
 
 ### Diagrammes
 

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/Button';
 import { Mail, Lock, BookOpen, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -33,7 +34,23 @@ export function Authentication() {
                 // 2. Connexion dans notre context si 200 OK
                 if (response.data.access) {
                     login(response.data.access, response.data.refresh);
-                    navigate('/dashboard');
+
+                    try {
+                        const decoded: any = jwtDecode(response.data.access);
+                        const role = decoded.role || 'CANDIDATE';
+
+                        if (role === 'SUPER_ADMIN') {
+                            navigate('/dashboard/superadmin');
+                        } else if (role === 'COORDINATOR') {
+                            navigate('/dashboard/admin');
+                        } else if (role === 'ETABLISSEMENT_ADMIN') {
+                            navigate('/dashboard/etablissement');
+                        } else {
+                            navigate('/dashboard');
+                        }
+                    } catch (e) {
+                        navigate('/dashboard');
+                    }
                 }
             } catch (err: any) {
                 if (err.response && err.response.status === 401) {

@@ -5,7 +5,7 @@ from .models import Course, Establishment, Enrollment
 class EstablishmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Establishment
-        fields = ['id', 'name', 'code', 'logo', 'description', 'manager', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'code', 'logo', 'description', 'address', 'website', 'manager', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 class CourseSerializer(serializers.ModelSerializer):

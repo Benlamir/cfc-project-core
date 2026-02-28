@@ -47,6 +47,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('courses.urls')),
     path('api/users/', include('users.urls')),
+    path('api/superadmin/', include('cfc_core.superadmin_urls')),
     
     # JWT Auth
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),

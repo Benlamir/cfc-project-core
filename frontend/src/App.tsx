@@ -12,6 +12,9 @@ import { CoordinatorDashboard } from './pages/admin/CoordinatorDashboard';
 import { AdminFormations } from './pages/admin/AdminFormations';
 import { CandidateDetail } from './pages/admin/CandidateDetail';
 import { EtablissementDashboard } from './pages/admin/EtablissementDashboard';
+import { SuperAdminEtablissements } from './pages/superadmin/SuperAdminEtablissements';
+import { SuperAdminUsers } from './pages/superadmin/SuperAdminUsers';
+import { SuperAdminSettings } from './pages/superadmin/SuperAdminSettings';
 import { Error403 } from './pages/Error403';
 
 // Layouts
@@ -62,10 +65,10 @@ function App() {
           <Route element={<RoleGuard allowedRoles={['SUPER_ADMIN']} />}>
             <Route path="/dashboard/superadmin" element={<SuperAdminLayout />}>
               <Route index element={<div className="p-4">Bienvenue, Super Admin</div>} />
-              <Route path="etablissements" element={<div className="p-4">Pages des Établissements (En construction)</div>} />
-              <Route path="utilisateurs" element={<div className="p-4">Gestion des Utilisateurs (En construction)</div>} />
+              <Route path="etablissements" element={<SuperAdminEtablissements />} />
+              <Route path="utilisateurs" element={<SuperAdminUsers />} />
               <Route path="statistiques" element={<div className="p-4">Statistiques Globales (En construction)</div>} />
-              <Route path="parametres" element={<div className="p-4">Paramètres Système (En construction)</div>} />
+              <Route path="parametres" element={<SuperAdminSettings />} />
             </Route>
           </Route>
 

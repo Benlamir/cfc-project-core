@@ -25,10 +25,10 @@ const etabadminNavigation = [
 
 const superadminNavigation = [
     { name: 'Vue Globale', href: '/dashboard/superadmin', icon: LayoutDashboard },
-    { name: 'Établissements', href: '/dashboard/etablissements', icon: GraduationCap },
-    { name: 'Comptes Utilisateurs', href: '/dashboard/utilisateurs', icon: Users },
-    { name: 'Statistiques', href: '/dashboard/statistiques', icon: Activity },
-    { name: 'Paramètres Système', href: '/dashboard/parametres', icon: Settings },
+    { name: 'Établissements', href: '/dashboard/superadmin/etablissements', icon: GraduationCap },
+    { name: 'Comptes Utilisateurs', href: '/dashboard/superadmin/utilisateurs', icon: Users },
+    { name: 'Statistiques', href: '/dashboard/superadmin/statistiques', icon: Activity },
+    { name: 'Paramètres Système', href: '/dashboard/superadmin/parametres', icon: Settings },
 ];
 
 export interface SidebarProps {

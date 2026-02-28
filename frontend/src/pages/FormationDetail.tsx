@@ -30,6 +30,8 @@ export function FormationDetail() {
     const [motivation, setMotivation] = React.useState('');
     const [cvFile, setCvFile] = React.useState<File | null>(null);
     const [diplomeFile, setDiplomeFile] = React.useState<File | null>(null);
+    const [isUploadingCv, setIsUploadingCv] = React.useState(false);
+    const [isUploadingDiplome, setIsUploadingDiplome] = React.useState(false);
 
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({});
@@ -95,6 +97,13 @@ export function FormationDetail() {
         return Object.keys(errors).length === 0;
     };
 
+    const isStepValid = (step: number) => {
+        if (step === 1) return !!(firstName && lastName && email && phone && cin);
+        if (step === 2) return !!(lastDegree && origEtab && gradYear);
+        if (step === 3) return !!(cvFile && diplomeFile && !isUploadingCv && !isUploadingDiplome);
+        return true;
+    };
+
     const nextStep = () => {
         if (validateStep(currentStep)) {
             setCurrentStep(s => s + 1);
@@ -104,20 +113,36 @@ export function FormationDetail() {
 
     const prevStep = () => setCurrentStep(s => s - 1);
 
-    const handleFileDrop = (e: React.DragEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<File | null>>) => {
-        e.preventDefault();
-        const file = e.dataTransfer.files?.[0];
-        if (file) {
-            setter(file);
-            setFieldErrors(prev => ({ ...prev, global: '' }));
+    const processFileUpload = (file: File, type: 'cv' | 'diplome') => {
+        if (type === 'cv') {
+            setIsUploadingCv(true);
+            setTimeout(() => {
+                setCvFile(file);
+                setIsUploadingCv(false);
+                setFieldErrors(prev => ({ ...prev, global: '' }));
+            }, 1500);
+        } else {
+            setIsUploadingDiplome(true);
+            setTimeout(() => {
+                setDiplomeFile(file);
+                setIsUploadingDiplome(false);
+                setFieldErrors(prev => ({ ...prev, global: '' }));
+            }, 1500);
         }
     };
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<File | null>>) => {
+    const handleFileDrop = (e: React.DragEvent<HTMLDivElement>, type: 'cv' | 'diplome') => {
+        e.preventDefault();
+        const file = e.dataTransfer.files?.[0];
+        if (file) {
+            processFileUpload(file, type);
+        }
+    };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'cv' | 'diplome') => {
         const file = e.target.files?.[0];
         if (file) {
-            setter(file);
-            setFieldErrors(prev => ({ ...prev, global: '' }));
+            processFileUpload(file, type);
         }
     };
 
@@ -512,18 +537,25 @@ export function FormationDetail() {
                                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Curriculum Vitae (CV) * <span className="text-xs text-slate-400 font-normal">PDF/Word, max 5Mo</span></label>
                                                 <div
                                                     onDragOver={(e) => e.preventDefault()}
-                                                    onDrop={(e) => handleFileDrop(e, setCvFile)}
+                                                    onDrop={(e) => handleFileDrop(e, 'cv')}
                                                     className={`relative border-2 border-dashed rounded-[8px] p-6 text-center transition-colors group cursor-pointer ${fieldErrors.cvFile ? 'border-red-400 bg-red-50 dark:bg-red-900/10' : 'border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
                                                 >
-                                                    <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => handleFileSelect(e, setCvFile)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                                                    {cvFile ? (
+                                                    <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => handleFileSelect(e, 'cv')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                                    {isUploadingCv ? (
                                                         <div className="flex flex-col items-center">
-                                                            <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mb-2"><FileText className="h-5 w-5 text-emerald-600" /></div>
+                                                            <div className="h-10 w-10 flex items-center justify-center mb-2">
+                                                                <div className="h-6 w-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                                                            </div>
+                                                            <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Téléchargement en cours...</p>
+                                                        </div>
+                                                    ) : cvFile ? (
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mb-2"><CheckCircle2 className="h-5 w-5 text-emerald-600" /></div>
                                                             <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[250px]">{cvFile.name}</p>
                                                         </div>
                                                     ) : (
                                                         <div className="flex flex-col items-center">
-                                                            <Upload className="h-8 w-8 text-slate-400 mb-2" />
+                                                            <Upload className="h-8 w-8 text-slate-400 mb-2 group-hover:text-emerald-500 transition-colors" />
                                                             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Glissez-déposez ou cliquez ici</p>
                                                         </div>
                                                     )}
@@ -536,18 +568,25 @@ export function FormationDetail() {
                                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Dernier Diplôme * <span className="text-xs text-slate-400 font-normal">PDF/Word/Images, max 5Mo</span></label>
                                                 <div
                                                     onDragOver={(e) => e.preventDefault()}
-                                                    onDrop={(e) => handleFileDrop(e, setDiplomeFile)}
+                                                    onDrop={(e) => handleFileDrop(e, 'diplome')}
                                                     className={`relative border-2 border-dashed rounded-[8px] p-6 text-center transition-colors group cursor-pointer ${fieldErrors.diplomeFile ? 'border-red-400 bg-red-50 dark:bg-red-900/10' : 'border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
                                                 >
-                                                    <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onChange={(e) => handleFileSelect(e, setDiplomeFile)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                                                    {diplomeFile ? (
+                                                    <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onChange={(e) => handleFileSelect(e, 'diplome')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                                    {isUploadingDiplome ? (
                                                         <div className="flex flex-col items-center">
-                                                            <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mb-2"><FileText className="h-5 w-5 text-emerald-600" /></div>
+                                                            <div className="h-10 w-10 flex items-center justify-center mb-2">
+                                                                <div className="h-6 w-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                                                            </div>
+                                                            <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Téléchargement en cours...</p>
+                                                        </div>
+                                                    ) : diplomeFile ? (
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mb-2"><CheckCircle2 className="h-5 w-5 text-emerald-600" /></div>
                                                             <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[250px]">{diplomeFile.name}</p>
                                                         </div>
                                                     ) : (
                                                         <div className="flex flex-col items-center">
-                                                            <Upload className="h-8 w-8 text-slate-400 mb-2" />
+                                                            <Upload className="h-8 w-8 text-slate-400 mb-2 group-hover:text-emerald-500 transition-colors" />
                                                             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Glissez-déposez ou cliquez ici</p>
                                                         </div>
                                                     )}
@@ -675,7 +714,7 @@ export function FormationDetail() {
                                     )}
 
                                     {currentStep < 4 ? (
-                                        <Button onClick={nextStep} className="rounded-[8px] bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white">
+                                        <Button onClick={nextStep} disabled={!isStepValid(currentStep)} className="rounded-[8px] bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed">
                                             Suivant <ArrowRight className="h-4 w-4 ml-2" />
                                         </Button>
                                     ) : (

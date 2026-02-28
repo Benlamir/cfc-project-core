@@ -322,6 +322,7 @@ export function AdminFormations() {
                                                 <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Date de fermeture</label>
                                                 <input
                                                     type="date"
+                                                    min={formData.registration_open_date || undefined}
                                                     value={formData.registration_close_date}
                                                     onChange={e => setFormData({ ...formData, registration_close_date: e.target.value })}
                                                     className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:text-white"
