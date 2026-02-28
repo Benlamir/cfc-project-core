@@ -189,7 +189,7 @@ export function Candidates() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
                                                 <Link
-                                                    to={`/dashboard/candidats/${enr.id}`}
+                                                    to={`${enr.id}`}
                                                     className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm"
                                                 >
                                                     Examiner
