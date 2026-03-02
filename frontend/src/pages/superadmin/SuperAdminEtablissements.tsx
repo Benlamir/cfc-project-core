@@ -12,7 +12,7 @@ import {
     CheckCircle2,
     Image as ImageIcon
 } from 'lucide-react';
-import api from '../../lib/api';
+import api from '../../services/api';
 
 export function SuperAdminEtablissements() {
     const [etablissements, setEtablissements] = useState<any[]>([]);

@@ -4,7 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Mail, Lock, BookOpen, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import api from '../lib/api';
+import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 export function Authentication() {

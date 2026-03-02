@@ -7,7 +7,7 @@ import {
     Save,
     History
 } from 'lucide-react';
-import api from '../../lib/api';
+import api from '../../services/api';
 
 export function SuperAdminSettings() {
     const [isLoading, setIsLoading] = useState(true);

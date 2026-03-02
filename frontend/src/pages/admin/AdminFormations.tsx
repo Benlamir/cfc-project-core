@@ -10,7 +10,7 @@ import {
     Users,
     X
 } from 'lucide-react';
-import api from '../../lib/api';
+import api from '../../services/api';
 
 export function AdminFormations() {
     const [courses, setCourses] = useState<any[]>([]);

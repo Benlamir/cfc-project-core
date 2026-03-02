@@ -9,7 +9,7 @@ import {
     X,
     RefreshCw
 } from 'lucide-react';
-import api from '../../lib/api';
+import api from '../../services/api';
 
 export function SuperAdminUsers() {
     const [users, setUsers] = useState<any[]>([]);
