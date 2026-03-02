@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Card, CardContent } from '../components/ui/Card';
 import { BookOpen, Calendar, Clock, Download, FileText, CheckCircle2, XCircle, Activity, Check } from 'lucide-react';
-import api from '../lib/api';
+import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 

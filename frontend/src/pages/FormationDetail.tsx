@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Clock, MapPin, GraduationCap, Calendar, CheckCircle2, ChevronLeft, Users, BookOpen, X, Upload, FileText, ArrowRight, Check, XCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import api from '../lib/api';
+import api from '../services/api';
 
 export function FormationDetail() {
     const { id } = useParams();

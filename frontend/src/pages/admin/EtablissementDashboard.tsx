@@ -15,7 +15,7 @@ import {
     Area,
     AreaChart
 } from 'recharts';
-import api from '../../lib/api';
+import api from '../../services/api';
 
 export function EtablissementDashboard() {
     const [stats, setStats] = useState({

@@ -11,7 +11,7 @@ import {
     GraduationCap,
     Calendar
 } from 'lucide-react';
-import api from '../../lib/api';
+import api from '../../services/api';
 
 export function CandidateDetail() {
     const { id } = useParams();

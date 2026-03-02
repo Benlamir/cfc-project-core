@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/Card';
 import { Users, FileText, Search } from 'lucide-react';
-import api from '../lib/api';
+import api from '../services/api';
 
 interface Enrollment {
     id: string;

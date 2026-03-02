@@ -17,7 +17,7 @@ import {
     ResponsiveContainer,
     Legend
 } from 'recharts';
-import api from '../../lib/api';
+import api from '../../services/api';
 
 export function CoordinatorDashboard() {
     const [stats, setStats] = useState({
