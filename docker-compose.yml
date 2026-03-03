@@ -16,7 +16,7 @@ services:
   backend:
     build: ./backend # Suppose que tu as un dossier 'backend' avec un Dockerfile
     container_name: projet_backend
-    command: python manage.py runserver 0.0.0.0:8000
+    command: sh -c "python manage.py migrate && python manage.py seed_users && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app # Hot-Reload : Si tu modifies le code, ça se met à jour direct
     ports:
