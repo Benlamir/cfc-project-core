@@ -1,179 +1,228 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { Card, CardContent } from '../components/ui/Card';
+import { Search, MapPin, GraduationCap, ChevronDown, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Button } from '../components/ui/Button';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
-import Header from '../components/Header';
 
-// Interface pour les données (à déplacer dans un fichier de types partagé plus tard)
-interface Establishment {
-    id: number;
-    name: string;
-    code: string;
-    logo: string | null;
-}
-
-interface Course {
-    id: number;
-    title: string;
-    description: string;
-    establishment_details: Establishment;
-    status: string;
-    start_date: string;
-    end_date: string;
-    is_open: boolean;
-}
-
-const Home: React.FC = () => {
-    const [courses, setCourses] = useState<Course[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [filterEstablishment, setFilterEstablishment] = useState<string>('');
-    const [filterStatus, setFilterStatus] = useState<string>('');
-
-    useEffect(() => {
-        const fetchCourses = async () => {
-            try {
-                const response = await api.get('/courses/');
-                setCourses(response.data);
-                setLoading(false);
-            } catch (err) {
-                console.error("Erreur lors du chargement des formations", err);
-                setError("Impossible de charger le catalogue. Veuillez réessayer plus tard.");
-                setLoading(false);
-            }
+// Simple debounce hook for performance optimization
+function useDebounce<T>(value: T, delay: number): T {
+    const [debouncedValue, setDebouncedValue] = React.useState<T>(value);
+    React.useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
         };
+    }, [value, delay]);
+    return debouncedValue;
+}
 
-        fetchCourses();
-    }, []);
+export function Home() {
+    const [searchQuery, setSearchQuery] = React.useState('');
+    const [domainFilter, setDomainFilter] = React.useState('');
+    const [levelFilter, setLevelFilter] = React.useState('');
 
-    // Filtrage simple côté client pour l'instant
-    const filteredCourses = courses.filter(course => {
-        const matchEstablishment = filterEstablishment ? course.establishment_details.name.includes(filterEstablishment) : true;
-        const matchStatus = filterStatus ? course.status === filterStatus : true;
-        return matchEstablishment && matchStatus;
-    });
+    // Use debounced search query to prevent excessive filtering re-renders
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-    const uniqueEstablishments = Array.from(new Set(courses.map(c => c.establishment_details.name)));
+    const formations = [
+        {
+            id: 1,
+            title: "Master en Ingénierie des Systèmes d'Information",
+            status: "Ouvert",
+            etablissement: "École Nationale des Sciences Appliquées",
+            niveau: "Master",
+            domaine: "Informatique",
+            dateDebut: "Septembre 2026",
+            placesL: 12
+        },
+        {
+            id: 2,
+            title: "Licence Professionnelle en Management",
+            status: "Fermé",
+            etablissement: "Faculté d'Économie et de Gestion",
+            niveau: "Licence",
+            domaine: "Gestion",
+            dateDebut: "Octobre 2026",
+            placesL: 0
+        },
+        {
+            id: 3,
+            title: "Master Spécialisé en Data Science",
+            status: "Ouvert",
+            etablissement: "Faculté des Sciences",
+            niveau: "Master",
+            domaine: "Intelligence Artificielle",
+            dateDebut: "Septembre 2026",
+            placesL: 5
+        },
+        {
+            id: 4,
+            title: "Diplôme Universitaire en Cybersécurité",
+            status: "Ouvert",
+            etablissement: "École Nationale de Commerce",
+            niveau: "Formation Continue",
+            domaine: "Sécurité",
+            dateDebut: "Novembre 2026",
+            placesL: 20
+        }
+    ];
+
+    // Compute derived filtered list
+    const filteredFormations = React.useMemo(() => {
+        return formations.filter(form => {
+            // Check domain filter (exact match or empty)
+            if (domainFilter && form.domaine !== domainFilter) return false;
+
+            // Check level filter (exact match or empty)
+            if (levelFilter && form.niveau !== levelFilter) return false;
+
+            // Check debounced search query (case insensitive search in multiple fields)
+            if (debouncedSearchQuery) {
+                const query = debouncedSearchQuery.toLowerCase();
+                const matchTitle = form.title.toLowerCase().includes(query);
+                const matchSchool = form.etablissement.toLowerCase().includes(query);
+                const matchDomain = form.domaine.toLowerCase().includes(query);
+                if (!matchTitle && !matchSchool && !matchDomain) return false;
+            }
+
+            return true;
+        });
+    }, [debouncedSearchQuery, domainFilter, levelFilter]);
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
-            <Header />
+        <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
+            {/* Header and Search Section */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-white dark:bg-slate-900 p-6 rounded-2xl subtle-shadow border border-slate-100 dark:border-slate-800">
+                <div className="w-full md:w-1/2">
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Catalogue des Formations</h1>
+                    <p className="text-slate-500 mt-2">Découvrez nos programmes d'excellence et postulez en quelques clics.</p>
 
-            {/* 2. Hero Section */}
-            <div className="bg-gray-100 py-20 border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h1 className="text-4xl md:text-5xl font-extrabold text-blue-900 mb-4 tracking-tight">
-                        Développez vos compétences
-                    </h1>
-                    <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                        Découvrez nos formations certifiantes et continuez d'apprendre avec les meilleurs experts universitaires.
+                    <div className="relative mt-6 group">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-emerald-600 dark:text-emerald-500 transition-colors group-focus-within:text-emerald-700">
+                            <Search className="h-5 w-5" />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Rechercher une formation, un domaine, un établissement..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="flex h-12 w-full rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-4 py-2 pl-12 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:bg-white dark:focus-visible:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                        />
+                    </div>
+                </div>
+
+                {/* Dropdown Filters */}
+                <div className="w-full md:w-auto flex flex-wrap gap-3">
+                    <div className="relative">
+                        <select
+                            value={domainFilter}
+                            onChange={(e) => setDomainFilter(e.target.value)}
+                            className="appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 h-10 px-4 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 cursor-pointer shadow-sm hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
+                        >
+                            <option value="">Tous les Domaines</option>
+                            <option value="Informatique">Informatique</option>
+                            <option value="Gestion">Gestion</option>
+                            <option value="Intelligence Artificielle">IA / Data Science</option>
+                            <option value="Sécurité">Cybersécurité</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-slate-400 pointer-events-none" />
+                    </div>
+                    <div className="relative">
+                        <select
+                            value={levelFilter}
+                            onChange={(e) => setLevelFilter(e.target.value)}
+                            className="appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 h-10 px-4 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 cursor-pointer shadow-sm hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
+                        >
+                            <option value="">Tous les Niveaux</option>
+                            <option value="Master">Master</option>
+                            <option value="Licence">Licence</option>
+                            <option value="Formation Continue">Formation Continue</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-slate-400 pointer-events-none" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Grid of Cards */}
+            {filteredFormations.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredFormations.map((form) => (
+                        <Link to={`/dashboard/formations/${form.id}`} key={form.id} className="block group">
+                            <Card className="h-full hover:-translate-y-1 hover:shadow-xl transition-all duration-300 border-slate-100 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 cursor-pointer">
+                                <CardContent className="p-0 flex flex-col h-full">
+                                    {/* Card Banner Top */}
+                                    <div className="h-2 w-full bg-gradient-to-r from-emerald-500 to-emerald-700 transition-all duration-300 group-hover:from-emerald-400 group-hover:to-emerald-600"></div>
+
+                                    <div className="p-6 flex flex-col flex-grow">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${form.status === 'Ouvert'
+                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                                }`}>
+                                                {form.status === 'Ouvert' ? <CheckCircle2 className="mr-1 h-3 w-3" /> : <XCircle className="mr-1 h-3 w-3" />}
+                                                {form.status}
+                                            </span>
+                                            <span className="text-xs font-semibold px-2 py-1 rounded bg-slate-50 text-slate-500 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                                                {form.niveau}
+                                            </span>
+                                        </div>
+
+                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 line-clamp-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                                            {form.title}
+                                        </h3>
+
+                                        <div className="space-y-2 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
+                                            <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
+                                                <MapPin className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-500" />
+                                                <span className="truncate">{form.etablissement}</span>
+                                            </div>
+                                            <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
+                                                <GraduationCap className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-500" />
+                                                {form.domaine}
+                                            </div>
+                                            <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
+                                                <Clock className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-500" />
+                                                Début: {form.dateDebut}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+                                        <span className={`text-sm font-medium ${form.status === 'Ouvert' ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                                            {form.status === 'Ouvert' ? `${form.placesL} places restantes` : 'Complet'}
+                                        </span>
+                                        <Button
+                                            size="sm"
+                                            variant={form.status === 'Ouvert' ? 'default' : 'outline'}
+                                            disabled={form.status !== 'Ouvert'}
+                                            className={form.status === 'Ouvert' ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm' : 'dark:border-slate-700 dark:text-slate-400'}
+                                        >
+                                            {form.status === 'Ouvert' ? 'Postuler' : 'Fermé'}
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 subtle-shadow">
+                    <Search className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Aucune formation trouvée</h3>
+                    <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-sm mx-auto">
+                        Ajustez vos filtres ou votre recherche pour trouver le programme qui vous correspond.
                     </p>
+                    <Button
+                        variant="outline"
+                        onClick={() => { setSearchQuery(''); setDomainFilter(''); setLevelFilter(''); }}
+                        className="mt-6"
+                    >
+                        Réinitialiser les filtres
+                    </Button>
                 </div>
-            </div>
-
-            {/* 3. Filters */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
-                <div className="bg-white p-6 rounded-lg shadow-md flex flex-wrap gap-4 items-center justify-between border border-gray-100">
-                    <div className="flex gap-4 w-full md:w-auto">
-                        <select
-                            className="block w-full md:w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-gray-50"
-                            value={filterEstablishment}
-                            onChange={(e) => setFilterEstablishment(e.target.value)}
-                        >
-                            <option value="">Tous les établissements</option>
-                            {uniqueEstablishments.map(name => (
-                                <option key={name} value={name}>{name}</option>
-                            ))}
-                        </select>
-                        <select
-                            className="block w-full md:w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-gray-50"
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                        >
-                            <option value="">Tous les statuts</option>
-                            <option value="PUBLISHED">Publié</option>
-                            <option value="DRAFT">Brouillon</option>
-                        </select>
-                    </div>
-                    <div className="text-sm text-gray-500">
-                        {filteredCourses.length} formation{filteredCourses.length > 1 ? 's' : ''} trouvée{filteredCourses.length > 1 ? 's' : ''}
-                    </div>
-                </div>
-            </div>
-
-            {/* 4. Course Grid */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                {loading ? (
-                    <div className="text-center py-20 text-gray-500">Chargement du catalogue...</div>
-                ) : error ? (
-                    <div className="text-center py-20 text-red-500">{error}</div>
-                ) : filteredCourses.length === 0 ? (
-                    <div className="text-center py-20 text-gray-500 bg-white rounded-lg border border-dashed border-gray-300">
-                        Aucune formation ne correspond à vos critères.
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filteredCourses.map(course => (
-                            <div key={course.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-300 overflow-hidden border border-gray-100 flex flex-col h-full group">
-                                <div className="h-48 bg-gray-200 relative overflow-hidden">
-                                    {/* Placeholder Image - could be replaced by real image if available */}
-                                    {course.establishment_details.logo ? (
-                                        <img src={course.establishment_details.logo} alt={course.establishment_details.name} className="w-full h-full object-cover transition transform group-hover:scale-105 duration-500" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-200">
-                                            <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" /></svg>
-                                        </div>
-                                    )}
-                                    {course.is_open && (
-                                        <span className="absolute top-4 right-4 bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded shadow-sm">
-                                            Inscriptions Ouvertes
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="p-6 flex-1 flex flex-col">
-                                    <div className="flex items-center mb-3">
-                                        <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                            {course.establishment_details.name}
-                                        </span>
-                                    </div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition">
-                                        {course.title}
-                                    </h3>
-                                    <p className="text-gray-600 text-sm line-clamp-3 mb-4 flex-1">
-                                        {course.description}
-                                    </p>
-
-                                    <div className="mt-auto border-t border-gray-100 pt-4 flex items-center justify-between">
-                                        <div className="text-xs text-gray-500">
-                                            <div>Début : {course.start_date || 'Non défini'}</div>
-                                            <div>Fin : {course.end_date || 'Non défini'}</div>
-                                        </div>
-                                        <Link to={`/courses/${course.id}`} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 transition">
-                                            Détails
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </main>
-
-            {/* 5. Footer */}
-            <footer className="bg-white border-t border-gray-200 mt-20">
-                <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center">
-                        <div className="text-gray-400 text-sm">
-                            &copy; 2026 Centre de Formation Continue. Tous droits réservés.
-                        </div>
-                        <div className="flex space-x-6">
-                            <a href="#" className="text-gray-400 hover:text-gray-500">Mentions légales</a>
-                            <a href="#" className="text-gray-400 hover:text-gray-500">Contact</a>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+            )}
         </div>
     );
-};
-
-export default Home;
+}

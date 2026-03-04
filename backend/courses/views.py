@@ -48,11 +48,37 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
             models.Q(course__coordinator=user)
         ).distinct()
 
+    def create(self, request, *args, **kwargs):
+        print("REQUEST DATA:", request.data)
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print("VALIDATION ERRORS:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_create(self, serializer):
+        from rest_framework import serializers 
         # Vérifier si le candidat a déjà une inscription pour ce cours
         course = serializer.validated_data['course']
         if Enrollment.objects.filter(course=course, candidate=self.request.user).exists():
-            raise serializers.ValidationError("Vous êtes déjà inscrit à ce cours.")
+            raise serializers.ValidationError({"course": "Vous êtes déjà inscrit à ce cours."})
             
-        # Assigner automatiquement le candidat connecté
-        serializer.save(candidate=self.request.user)
+        # Assigner automatiquement le candidat connecté et forcer le statut initial pour ignorer les tentatives directes
+        serializer.save(candidate=self.request.user, status=Enrollment.Status.SUBMITTED, rejection_reason='')
+        
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        user = self.request.user
+        instance = self.get_object()
+        
+        # Check if 'status' or 'rejection_reason' is being updated by a non-coordinator
+        updating_restricted_fields = 'status' in serializer.validated_data or 'rejection_reason' in serializer.validated_data
+        
+        if updating_restricted_fields:
+            # Only superusers or the course coordinator can change the status
+            if not (user.is_superuser or instance.course.coordinator == user):
+                raise PermissionDenied("Vous n'êtes pas autorisé à modifier le statut de cette candidature.")
+                
+        serializer.save()

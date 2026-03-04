@@ -9,6 +9,8 @@ class Establishment(models.Model):
     code = models.CharField(max_length=50, unique=True)
     logo = models.ImageField(upload_to='establishments/logos/', null=True, blank=True)
     description = models.TextField(blank=True)
+    address = models.TextField(blank=True)
+    website = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -111,7 +113,21 @@ class Enrollment(models.Model):
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
-        default=Status.PRE_ENROLLED
+        default=Status.SUBMITTED
+    )
+    
+    cv_file = models.FileField(
+        upload_to='enrollments/cvs/',
+        null=True,
+        blank=True,
+        help_text="CV ou Dossier de candidature"
+    )
+    
+    diplome_file = models.FileField(
+        upload_to='enrollments/diplomes/',
+        null=True,
+        blank=True,
+        help_text="Copie du dernier diplôme obtenu"
     )
     
     application_date = models.DateTimeField(auto_now_add=True)
@@ -128,3 +144,22 @@ class Enrollment(models.Model):
 
     def __str__(self):
         return f"{self.candidate} -> {self.course} ({self.status})"
+
+class SystemConfig(models.Model):
+    """
+    Singleton model for global system configuration.
+    """
+    academic_year = models.CharField(max_length=20, default="2025-2026", help_text="Ex: 2025-2026")
+    is_maintenance_mode = models.BooleanField(default=False)
+    
+    class Meta:
+        verbose_name = "Configuration Système"
+        verbose_name_plural = "Configuration Système"
+        
+    @classmethod
+    def get_solo(cls):
+        obj, created = cls.objects.get_or_create(id=1)
+        return obj
+
+    def __str__(self):
+        return "Configuration Globale"
